@@ -14,7 +14,7 @@ pipeline {
         // Checkout Source Code
         stage('Git Checkout') { 
             steps {
-                git branch: 'main', url: 'https://github.com/your-repo/shop-ease.git'
+                git branch: 'main', url: 'https://github.com/imshubhamkaushik/microservice-shopease.git'
             }
         }
 
