@@ -7,14 +7,14 @@ pipeline {
         PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:latest"
         FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:latest"
         HELM_CHART_DIR = "shopease-chart"
-        SONARQUBE = "SonarQube" // Name from Jenkins Config
+        SONARQUBE = "sonarqube" // Name from Jenkins Config
         DOCKER_CREDENTIALS = credentials('dockerhub') // Jenkins credential ID for dockerhub
     }
     stages {
         // Checkout Source Code
         stage('Git Checkout') { 
             steps {
-                git branch: 'main', url: 'https://github.com/your-repo/shop-ease.git'
+                git branch: 'main', url: 'https://github.com/imshubhamkaushik/microservice-shopease.git'
             }
         }
 
