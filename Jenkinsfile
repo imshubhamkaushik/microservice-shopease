@@ -7,8 +7,8 @@ pipeline {
         PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:latest"
         FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:latest"
         HELM_CHART_DIR = "shopease-chart"
-        SONARQUBE = "SonarQube" // Name from Jenkins Config
-        DOCKER_CREDENTIALS = credentials('dockerhub') // Jenkins credential ID for dockerhub
+        SONARQUBE = "sonarqube" // Name from Jenkins Config
+        DOCKER_CREDENTIALS = 'dockerhub' // Jenkins credential ID for dockerhub
     }
     stages {
         // Checkout Source Code
@@ -22,9 +22,9 @@ pipeline {
         stage('Build "User Service" and SonarQube Analysis') {
             steps {
                 dir('user-service') {
-                    sh 'mvn -B -DskipTests clean package'
+                    bat 'mvn -B -DskipTests clean package'
                     withSonarQubeEnv("$SONARQUBE") {
-                        sh 'mvn sonar:sonar'
+                        bat 'mvn sonar:sonar'
                     }
                 }
             }
@@ -42,9 +42,9 @@ pipeline {
         stage('Build "Product Service"') {
             steps {
                 dir('product-service') {
-                    sh 'mvn -B -DskipTests clean package'
+                    bat 'mvn -B -DskipTests clean package'
                     withSonarQubeEnv("$SONARQUBE") {
-                        sh 'mvn sonar:sonar'
+                        bat 'mvn sonar:sonar'
                     }
                 }
             }
@@ -62,8 +62,8 @@ pipeline {
         stage('Build "Frontend Service"') {
             steps {
                 dir('frontend') {
-                    sh 'npm install'
-                    sh 'npm run build'
+                    bat 'npm install'
+                    bat 'npm run build'
                 }
             }
         }
@@ -71,9 +71,9 @@ pipeline {
         // Docker Image Build
         stage ('Build Docker Image') {
             steps {
-                sh "docker build -t ${USER_SERVICE_IMAGE} ./user-service"
-                sh "docker build -t ${PRODUCT_SERVICE_IMAGE} ./product-service"
-                sh "docker build -t ${FRONTEND_SERVICE_IMAGE} ./frontend"
+                bat "docker build -t ${USER_SERVICE_IMAGE} ./user-service"
+                bat "docker build -t ${PRODUCT_SERVICE_IMAGE} ./product-service"
+                bat "docker build -t ${FRONTEND_SERVICE_IMAGE} ./frontend"
                 
             }
         }
@@ -81,10 +81,10 @@ pipeline {
         stage('Push Docker Images') {
             steps {
                 withCredentials([usernamePassword(credentialsId: '${DOCKER_CREDENTIALS}', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                    sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
-                    sh "docker push ${USER_SERVICE_IMAGE}"
-                    sh "docker push ${PRODUCT_SERVICE_IMAGE}"
-                    sh "docker push ${FRONTEND_SERVICE_IMAGE}"
+                    bat "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
+                    bat "docker push ${USER_SERVICE_IMAGE}"
+                    bat "docker push ${PRODUCT_SERVICE_IMAGE}"
+                    bat "docker push ${FRONTEND_SERVICE_IMAGE}"
                 }
             }
         }
@@ -92,10 +92,10 @@ pipeline {
         // Deploy to Kubernetes Using Helm
         stage('Deploy to Kubernetes via Helm') {
             steps {
-                sh """
-                helm upgrade --install shopease ${HELM_CHART_DIR} \
-                --set userService.image.repository=${USER_SERVICE_IMAGE} \
-                --set productService.image.repository=${PRODUCT_SERVICE_IMAGE} \
+                bat """
+                helm upgrade --install shopease ${HELM_CHART_DIR} ^
+                --set userService.image.repository=${USER_SERVICE_IMAGE} ^
+                --set productService.image.repository=${PRODUCT_SERVICE_IMAGE} ^
                 --set frontend.image.repository=${FRONTEND_SERVICE_IMAGE}
                 """
             }
