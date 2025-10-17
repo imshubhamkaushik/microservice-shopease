@@ -5,6 +5,8 @@ public class LoginRequest {
     private String password;
 
     public LoginRequest() {
+        // Required for frameworks (like Spring/Jackson) to properly deserialize
+        // JSON or form data into this object, maintaining JavaBean conventions.
     }
 
     public String getEmail() {
