@@ -32,7 +32,7 @@ pipeline {
 
         stage('Quality Gate For User Service') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -52,7 +52,7 @@ pipeline {
 
         stage('Quality Gate For Product Service') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
