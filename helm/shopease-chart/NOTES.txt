@@ -1,0 +1,9 @@
+ShopEase microservices successfully deployed!
+
+To access services inside the cluster:
+  kubectl get pods
+  kubectl get svc
+
+Example (port-forward for local testing):
+  kubectl port-forward svc/user-service 8081:8081
+  kubectl port-forward svc/product-service 8082:8082

@@ -1,0 +1,5 @@
+com\shopease\user\UserServiceApplication.class
+com\shopease\user\dto\LoginRequest.class
+com\shopease\user\repository\UserRepository.class
+com\shopease\user\model\User.class
+com\shopease\user\controller\UserController.class

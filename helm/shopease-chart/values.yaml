@@ -1,0 +1,49 @@
+global:
+  imageRegistry: "docker.io/imshubhamkaushik"
+
+userService:
+  image:
+    repository: "user-service"
+    tag: "latest"
+  service:
+    port: 8081
+  resources: {}
+  env:
+    SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/shopease"
+    SPRING_DATASOURCE_USERNAME: "postgres"
+    SPRING_DATASOURCE_PASSWORD: "postgres"
+
+productService:
+  image:
+    repository: "product-service"
+    tag: "latest"
+  service:
+    port: 8082
+  resources: {}
+  env:
+    SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/shopease"
+    SPRING_DATASOURCE_USERNAME: "postgres"
+    SPRING_DATASOURCE_PASSWORD: "postgres"
+
+frontend:
+  image:
+    repository: "frontend-service"
+    tag: "latest"
+  service: 
+    port: 80
+  resources: {}
+
+postgres:
+  image: postgres:17
+  username: postgres
+  password: postgres
+  db: shopease
+  port: 5432
+
+ingress:
+  enabled: true
+  host: shop.local
+  paths:
+    frontend: /
+    users: /users
+    products: /products

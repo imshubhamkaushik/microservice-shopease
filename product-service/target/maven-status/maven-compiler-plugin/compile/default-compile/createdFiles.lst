@@ -1,0 +1,4 @@
+com\shopease\product\ProductServiceApplication.class
+com\shopease\product\repository\ProductRepository.class
+com\shopease\product\controller\ProductController.class
+com\shopease\product\model\Product.class
