@@ -1,0 +1,19 @@
+# Maven build output
+target/
+
+# Git / IDE
+.git
+.gitignore
+.idea/
+.vscode/
+
+# Docker & Compose
+docker-compose*.yml
+Dockerfile
+
+# Logs / Temp files
+*.log
+*.tmp
+
+# Local config
+.env
