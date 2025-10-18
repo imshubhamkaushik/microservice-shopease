@@ -7,10 +7,6 @@ target/
 .idea/
 .vscode/
 
-# Docker & Compose
-docker-compose*.yml
-Dockerfile
-
 # Logs / Temp files
 *.log
 *.tmp

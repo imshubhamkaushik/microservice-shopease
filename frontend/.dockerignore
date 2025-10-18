@@ -18,9 +18,8 @@ yarn-error.log
 *.log
 *.tmp
 
-# Docker & Compose
-Dockerfile
-docker-compose*.yml
-
 # Local configs
 .env
+
+# Ignore git and editor files
+.DS_Store
