@@ -80,7 +80,7 @@ pipeline {
 
         stage('Push Docker Images') {
             steps {
-                withCredentials([usernamePassword(credentialsId: '${DOCKER_CREDENTIALS}', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     bat "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
                     bat "docker push ${USER_SERVICE_IMAGE}"
                     bat "docker push ${PRODUCT_SERVICE_IMAGE}"
