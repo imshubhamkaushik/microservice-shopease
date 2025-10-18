@@ -93,7 +93,7 @@ pipeline {
         // Deploy to Kubernetes Using Helm
         stage('Deploy to Kubernetes via Helm') {
             steps {
-                withKubeConfig([credentialsId: "${KUBERNETES_CREDENTIALS}"]) {
+                withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
                     bat """
                     helm upgrade --install shopease ${HELM_CHART_DIR} ^
                     --set userService.image.repository=${USER_SERVICE_IMAGE} ^
