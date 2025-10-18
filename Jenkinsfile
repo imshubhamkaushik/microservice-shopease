@@ -6,7 +6,7 @@ pipeline {
         USER_SERVICE_IMAGE = "${DOCKER_ORG}/user-service:latest"
         PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:latest"
         FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:latest"
-        HELM_CHART_DIR = "shopease-chart"
+        HELM_CHART_DIR = "helm/shopease-chart"
         SONARQUBE = "sonarqube" // Name from Jenkins Config
         DOCKER_CREDENTIALS = "dockerhub" // Jenkins credential ID for dockerhub
         KUBERNETES_CREDENTIALS = "kubernetes-config" // Jenkins credential ID for kubernetes
