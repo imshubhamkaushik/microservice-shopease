@@ -3,9 +3,9 @@ pipeline {
     environment {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_ORG = "imshubhamkaushik" // your dockerhub username
-        USER_SERVICE_IMAGE = "user-service"
-        PRODUCT_SERVICE_IMAGE = "product-service"
-        FRONTEND_SERVICE_IMAGE = "frontend-service"
+        USER_SERVICE_IMAGE = "${DOCKER_ORG}/user-service:latest"
+        PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:latest"
+        FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:latest"
         HELM_CHART_DIR = "helm/shopease-chart"
         SONARQUBE = "sonarqube" // Name from Jenkins Config
         DOCKER_CREDENTIALS = "dockerhub" // Jenkins credential ID for dockerhub
