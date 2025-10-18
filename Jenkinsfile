@@ -8,7 +8,7 @@ pipeline {
         FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:latest"
         HELM_CHART_DIR = "shopease-chart"
         SONARQUBE = "sonarqube" // Name from Jenkins Config
-        DOCKER_CREDENTIALS = 'dockerhub' // Jenkins credential ID for dockerhub
+        DOCKER_CREDENTIALS = "dockerhub" // Jenkins credential ID for dockerhub
     }
     stages {
         // Checkout Source Code
