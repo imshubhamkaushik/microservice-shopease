@@ -9,6 +9,7 @@ pipeline {
         HELM_CHART_DIR = "shopease-chart"
         SONARQUBE = "sonarqube" // Name from Jenkins Config
         DOCKER_CREDENTIALS = "dockerhub" // Jenkins credential ID for dockerhub
+        KUBERNETES_CREDENTIALS = "kubernetes-config" // Jenkins credential ID for kubernetes
     }
     stages {
         // Checkout Source Code
@@ -92,12 +93,15 @@ pipeline {
         // Deploy to Kubernetes Using Helm
         stage('Deploy to Kubernetes via Helm') {
             steps {
-                bat """
-                helm upgrade --install shopease ${HELM_CHART_DIR} ^
-                --set userService.image.repository=${USER_SERVICE_IMAGE} ^
-                --set productService.image.repository=${PRODUCT_SERVICE_IMAGE} ^
-                --set frontend.image.repository=${FRONTEND_SERVICE_IMAGE}
-                """
+                withKubeConfig([credentialsId: "${KUBERNETES_CREDENTIALS}"]) {
+                    bat """
+                    helm upgrade --install shopease ${HELM_CHART_DIR} ^
+                    --set userService.image.repository=${USER_SERVICE_IMAGE} ^
+                    --set productService.image.repository=${PRODUCT_SERVICE_IMAGE} ^
+                    --set frontend.image.repository=${FRONTEND_SERVICE_IMAGE}
+                    """  
+                }
+                
             }
         }
     }
