@@ -4,8 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npx react-scripts build
-# RUN npm run build
+RUN npm run build
 
 # Stage 2: Serve via Nginx
 FROM nginx:alpine
