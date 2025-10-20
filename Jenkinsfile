@@ -40,7 +40,7 @@ pipeline {
         }
 
         // Product Service Backend Build, SonarQube Analysis, and Quality Gate
-        stage('Build "Product Service"') {
+        stage('Build "Product Service" and SonarQube Analysis') {
             steps {
                 dir('product-service') {
                     bat 'mvn -B -DskipTests clean package'
@@ -97,11 +97,11 @@ pipeline {
                     bat """
                     helm upgrade --install shopease helm/shopease-chart \
                     --set userService.image.repository=imshubhamkaushik/user-service \
-                    --set userService.image.tag=latest \
+                    
                     --set productService.image.repository=imshubhamkaushik/product-service \
-                    --set productService.image.tag=latest \
+                    -
                     --set frontend.image.repository=imshubhamkaushik/frontend-service \
-                    --set frontend.image.tag=latest
+                    
                     """  
                 }
                 
