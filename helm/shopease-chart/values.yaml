@@ -34,7 +34,7 @@ frontend:
   resources: {}
 
 postgres:
-  image: postgres:17
+  image: postgres:18
   username: postgres
   password: postgres
   db: shopease
