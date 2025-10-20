@@ -95,10 +95,13 @@ pipeline {
             steps {
                 withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
                     bat """
-                    helm upgrade --install shopease ${HELM_CHART_DIR} ^
-                    --set userService.image.repository=${USER_SERVICE_IMAGE} ^
-                    --set productService.image.repository=${PRODUCT_SERVICE_IMAGE} ^
-                    --set frontend.image.repository=${FRONTEND_SERVICE_IMAGE}
+                    helm upgrade --install shopease helm/shopease-chart \
+                    --set userService.image.repository=imshubhamkaushik/user-service \
+                    --set userService.image.tag=latest \
+                    --set productService.image.repository=imshubhamkaushik/product-service \
+                    --set productService.image.tag=latest \
+                    --set frontend.image.repository=imshubhamkaushik/frontend-service \
+                    --set frontend.image.tag=latest
                     """  
                 }
                 
