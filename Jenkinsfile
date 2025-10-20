@@ -97,11 +97,8 @@ pipeline {
                     bat """
                     helm upgrade --install shopease helm/shopease-chart \
                     --set userService.image.repository=imshubhamkaushik/user-service \
-                    
                     --set productService.image.repository=imshubhamkaushik/product-service \
-                    -
                     --set frontend.image.repository=imshubhamkaushik/frontend-service \
-                    
                     """  
                 }
                 
