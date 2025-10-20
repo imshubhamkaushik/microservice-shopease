@@ -6,10 +6,10 @@ pipeline {
         USER_SERVICE_IMAGE = "${DOCKER_ORG}/user-service:latest"
         PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:latest"
         FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:latest"
-        HELM_CHART_DIR = "helm/shopease-chart"
-        SONARQUBE = "sonarqube" // Name from Jenkins Config
-        DOCKER_CREDENTIALS = "dockerhub" // Jenkins credential ID for dockerhub
-        KUBERNETES_CREDENTIALS = "kubernetes-config" // Jenkins credential ID for kubernetes
+        HELM_CHART_DIR = "helm/shopease-chart" // Directory for Helm chart, can use different directory
+        SONARQUBE = "sonarqube" // Jenkins credential ID for SonarQube, can use different Id as per your choice
+        DOCKER_CREDENTIALS = "dockerhub" // Jenkins credential ID for dockerhub, can use different Id as per your choice
+        KUBERNETES_CREDENTIALS = "kubernetes-config" // Jenkins credential ID for kubernetes, can use different Id as per your choice
     }
     stages {
         // Checkout Source Code
