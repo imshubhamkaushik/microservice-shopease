@@ -46,3 +46,7 @@ reports/
 # ====== Misc ======
 logs/
 tmp/
+
+frontend/build/
+user-service/target/
+product-service/target/

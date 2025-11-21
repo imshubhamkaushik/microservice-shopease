@@ -22,12 +22,13 @@ public class ProductController {
     }
 
     @PostMapping
+    @SuppressWarnings("null")
     public Product create(@RequestBody Product p) {
         return repo.save(p);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getOne(@PathVariable Long id) {
+    public ResponseEntity<Product> getOne(@PathVariable long id) {
         return repo.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 }
