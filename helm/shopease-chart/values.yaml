@@ -35,7 +35,7 @@ frontendService:
 
 postgres:
   image: postgres
-  tag: 18
+  tag: "16-alpine"
   username: postgres
   password: postgres
   db: shopease

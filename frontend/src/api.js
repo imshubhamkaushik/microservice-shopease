@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const API_BASE = ProcessingInstruction.env.REACT_APP_API_BASE_URL ||"";
+// Base URL for backend APIs
+// - In Docker/K8s behind a reverse proxy, you can keep this as ""
+// - For local development, set REACT_APP_API_BASE_URL in .env file
+const API_BASE = process.env.REACT_APP_API_BASE_URL || "";
 
 // --------USER APIs--------
 

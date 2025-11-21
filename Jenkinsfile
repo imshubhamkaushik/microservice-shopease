@@ -1,17 +1,22 @@
 pipeline {
     agent any
+
     environment {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_ORG = "imshubhamkaushik" // your dockerhub username
         USER_SERVICE_IMAGE = "${DOCKER_ORG}/user-service:latest"
         PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:latest"
         FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:latest"
+        
         HELM_CHART_DIR = "helm/shopease-chart" // Directory for Helm chart, can use different directory
+        
         SONARQUBE = "sonarqube" // Jenkins credential ID for SonarQube, can use different Id as per your choice
         DOCKER_CREDENTIALS = "dockerhub" // Jenkins credential ID for dockerhub, can use different Id as per your choice
         KUBERNETES_CREDENTIALS = "kubernetes-config" // Jenkins credential ID for kubernetes, can use different Id as per your choice
     }
+
     stages {
+
         // Checkout Source Code
         stage('Git Checkout') { 
             steps {
@@ -34,14 +39,6 @@ pipeline {
             }
         }
 
-       // stage('Quality Gate For User Service') {
-         //   steps {
-           //     timeout(time: 5, unit: 'MINUTES') {
-             //       waitForQualityGate abortPipeline: true
-               // }
-            //}
-        //}
-
         // Product Service Backend Build, SonarQube Analysis, and Quality Gate
         stage('Build "Product Service" and SonarQube Analysis') {
             steps {
@@ -56,15 +53,6 @@ pipeline {
                 }
             }
         }
-
-       // stage('Quality Gate For Product Service') {
-         //   steps {
-           //     timeout(time: 5, unit: 'MINUTES') {
-             //       waitForQualityGate abortPipeline: true
-               // }
-                
-            //}
-        //}
 
         // Frontend Service Build
         stage('Build "Frontend Service"') {
@@ -92,12 +80,6 @@ pipeline {
                 }
             }
         }
-
-        //stage('Push Docker Images') {
-           // steps {
-                
-          //  }
-        //}
 
         // Deploy to Kubernetes Using Helm
         stage('Deploy to Kubernetes via Helm') {
