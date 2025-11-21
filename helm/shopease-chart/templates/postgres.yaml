@@ -1,0 +1,64 @@
+# 1. Persistent Volume Claim Template
+#    This replaces the 'volumes' section in your Deployment
+apiVersion: apps/v1
+kind: StatefulSet # Use StatefulSet for stable database deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  serviceName: "postgres" # Must match the Service name below
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          # NOTE: Helm templating is preserved
+          image: "{{ .Values.postgres.image }}:{{ .Values.postgres.tag }}"
+          ports:
+            - containerPort: {{ .Values.postgres.port }}
+          env:
+            - name: POSTGRES_USER
+              value: "{{ .Values.postgres.username }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ .Values.postgres.password }}"
+            - name: POSTGRES_DB
+              value: "{{ .Values.postgres.db }}"
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            # This name must match the volumeClaimTemplates name
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+
+  # --- PVC AUTOPROVISIONING (CRITICAL FOR DATA PERSISTENCE) ---
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data # Name used in the volumeMounts section
+      spec:
+        accessModes: ["ReadWriteOnce"] # Only one pod can mount it
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 5Gi # Change this to your required disk size
+        # NOTE: For Minikube, this uses the default StorageClass
+---
+# 2. Service Definition (Remains the same for DNS)
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - port: {{ .Values.postgres.port }}
+      targetPort: {{ .Values.postgres.port }}
+      protocol: TCP

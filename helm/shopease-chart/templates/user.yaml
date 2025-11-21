@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: "{{ .Values.userService.image.repository }}"
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.userService.image.repository }}:{{ .Values.userService.image.tag }}"
           ports:
             - containerPort: {{ .Values.userService.service.port }}
           env:

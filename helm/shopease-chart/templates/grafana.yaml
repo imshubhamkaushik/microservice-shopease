@@ -1,21 +1,31 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: grafana-config
+data:
+  adminUser: admin
+  adminPassword: admin
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: grafana-datasource
 data:
-  prometheus-datasource.yaml: |
+  datasource.yaml: |
     apiVersion: 1
     datasources:
       - name: Prometheus
         type: prometheus
         access: proxy
         url: http://prometheus:9090
-        isDefault: true
+        isDefault:true
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
+  labels:
+    app: grafana
 spec:
   replicas: 1
   selector:
@@ -28,14 +38,20 @@ spec:
     spec:
       containers:
         - name: grafana
-          image: grafana/grafana:11.2.0
+          image: grafana/grafana:latest
           ports:
             - containerPort: 3000
           env:
             - name: GF_SECURITY_ADMIN_USER
-              value: admin
+              valueFrom:
+                configMapKeyRef:
+                  name: grafana-config
+                  key: adminUser
             - name: GF_SECURITY_ADMIN_PASSWORD
-              value: admin
+              valueFrom:
+                configMapKeyRef:
+                  name: grafana-config
+                  key: adminPassword
           volumeMounts:
             - name: grafana-datasource
               mountPath: /etc/grafana/provisioning/datasources

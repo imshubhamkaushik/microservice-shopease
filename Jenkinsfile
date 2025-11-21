@@ -20,24 +20,27 @@ pipeline {
         }
 
         // User Service Backend Build, SonarQube Analysis, and Quality Gate
-        stage('Build "User Service" and SonarQube Analysis') {
+        stage('Build "User Service", SonarQube Analysis and Quality Gate') {
             steps {
                 dir('user-service') {
                     bat 'mvn -B -DskipTests clean package'
                     withSonarQubeEnv("$SONARQUBE") {
                         bat 'mvn sonar:sonar'
-                    }
+                    }   
                 }
-            }
-        }
-
-        stage('Quality Gate For User Service') {
-            steps {
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
+
+       // stage('Quality Gate For User Service') {
+         //   steps {
+           //     timeout(time: 5, unit: 'MINUTES') {
+             //       waitForQualityGate abortPipeline: true
+               // }
+            //}
+        //}
 
         // Product Service Backend Build, SonarQube Analysis, and Quality Gate
         stage('Build "Product Service" and SonarQube Analysis') {
@@ -48,16 +51,20 @@ pipeline {
                         bat 'mvn sonar:sonar'
                     }
                 }
-            }
-        }
-
-        stage('Quality Gate For Product Service') {
-            steps {
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
+
+       // stage('Quality Gate For Product Service') {
+         //   steps {
+           //     timeout(time: 5, unit: 'MINUTES') {
+             //       waitForQualityGate abortPipeline: true
+               // }
+                
+            //}
+        //}
 
         // Frontend Service Build
         stage('Build "Frontend Service"') {
@@ -69,18 +76,14 @@ pipeline {
             }
         }
 
-        // Docker Image Build
-        stage ('Build Docker Image') {
+        // Docker Image Build and Push
+        stage ('Build and Push Docker Image') {
             steps {
                 bat "docker build -t ${USER_SERVICE_IMAGE} ./user-service"
                 bat "docker build -t ${PRODUCT_SERVICE_IMAGE} ./product-service"
                 bat "docker build -t ${FRONTEND_SERVICE_IMAGE} ./frontend"
-                
             }
-        }
-
-        stage('Push Docker Images') {
-            steps {
+            {
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     bat "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
                     bat "docker push ${USER_SERVICE_IMAGE}"
@@ -90,18 +93,18 @@ pipeline {
             }
         }
 
+        //stage('Push Docker Images') {
+           // steps {
+                
+          //  }
+        //}
+
         // Deploy to Kubernetes Using Helm
         stage('Deploy to Kubernetes via Helm') {
             steps {
                 withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
-                    bat """
-                    helm upgrade --install shopease helm/shopease-chart \
-                    --set userService.image.repository=imshubhamkaushik/user-service \
-                    --set productService.image.repository=imshubhamkaushik/product-service \
-                    --set frontend.image.repository=imshubhamkaushik/frontend-service \
-                    """  
+                    bat "helm upgrade --install shopease helm/shopease-chart"
                 }
-                
             }
         }
     }

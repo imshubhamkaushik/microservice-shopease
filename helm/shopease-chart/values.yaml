@@ -25,16 +25,17 @@ productService:
     SPRING_DATASOURCE_USERNAME: "postgres"
     SPRING_DATASOURCE_PASSWORD: "postgres"
 
-frontend:
+frontendService:
   image:
     repository: "frontend-service"
     tag: "latest"
-  service: 
+  service:
     port: 80
   resources: {}
 
 postgres:
-  image: postgres:18
+  image: postgres
+  tag: 18
   username: postgres
   password: postgres
   db: shopease
