@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/users")
+@CrossOrigin(origins = "*") // allow requests from frontend
 public class UserController {
     private final UserRepository repo;
 

@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/products")
+@CrossOrigin(origins = "*") // allow requests from frontend
 public class ProductController {
     private final ProductRepository repo;
 
