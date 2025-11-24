@@ -5,17 +5,18 @@ import { createUser } from "../api";
 const UserForm = ({ onUserAdded }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) {
+    if (!name.trim() || !email.trim() || !password.trim()) {
       alert("Please fill in all fields.");
       return;
     }
     setSubmitting(true);
     try {
-      await createUser({ name: name.trim(), email: email.trim() });
+      await createUser({ name: name.trim(), email: email.trim(), password });
       setName("");
       setEmail("");
       if (onUserAdded) onUserAdded();
@@ -46,6 +47,15 @@ const UserForm = ({ onUserAdded }) => {
         required
         style={{ marginRight: "10px" }}
         disabled={submitting}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        disabled={submitting}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        style={{ marginRight: "10px" }}
       />
       <button type="submit" disabled={submitting}>
         {submitting ? "Adding..." : "Add User"}

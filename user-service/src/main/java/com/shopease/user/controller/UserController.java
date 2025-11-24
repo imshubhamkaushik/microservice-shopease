@@ -1,8 +1,10 @@
 package com.shopease.user.controller;
 
-import com.shopease.user.model.User;
-import com.shopease.user.repository.UserRepository;
+import com.shopease.user.dto.CreateUserRequest;
 import com.shopease.user.dto.LoginRequest;
+import com.shopease.user.dto.UserResponse;
+import com.shopease.user.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,39 +12,55 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/users")
-@CrossOrigin(origins = "*") // allow requests from frontend
+@CrossOrigin(origins = "http://localhost:3000") // allow requests from frontend
 public class UserController {
-    private final UserRepository repo;
 
-    public UserController(UserRepository repo) {
-        this.repo = repo;
+    private final UserService svc;
+
+    public UserController(UserService svc) {
+        this.svc = svc;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody User user) {
-        if (repo.findByEmail(user.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().build();
-        }
-        User saved = repo.save(user);
-        saved.setPassword(null); // don't return password
-        return ResponseEntity.ok(saved);
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<User> login(@RequestBody LoginRequest lr) {
-        return repo.findByEmail(lr.getEmail())
-                .filter(u -> u.getPassword().equals(lr.getPassword()))
-                .map(u -> {
-                    u.setPassword(null);
-                    return ResponseEntity.ok(u);
-                })
-                .orElse(ResponseEntity.status(401).build());
-    }
-
+    /**
+     * List all users (response without password)
+     */
     @GetMapping
-    public List<User> all() {
-        List<User> list = repo.findAll();
-        list.forEach(u -> u.setPassword(null));
-        return list;
+    public List<UserResponse> getAll() {
+        return svc.listAll();
+    }
+
+    /**
+     * Register a new user. Validates input, hashes password in service.
+     */
+    @PostMapping("/register")
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody CreateUserRequest req) {
+        // Optionally, the service may throw an exception if email exists — handle via
+        // global exception handler
+        UserResponse created = svc.register(req);
+        return ResponseEntity.ok(created);
+    }
+
+    /**
+     * Login endpoint: validates credentials and returns user info (no password) on
+     * success.
+     */
+    @PostMapping("/login")
+    public ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest req) {
+        UserResponse user = svc.login(req);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(user);
+    }
+
+    /**
+     * Delete user by id
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        boolean deleted = svc.deleteById(id);
+        if (!deleted)
+            return ResponseEntity.notFound().build();
+        return ResponseEntity.noContent().build();
     }
 }

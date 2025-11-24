@@ -1,27 +1,24 @@
 package com.shopease.user.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 public class LoginRequest {
+
+    @Email(message = "Email must be valid")
+    @NotBlank(message = "Email must not be blank")
     private String email;
+
+    @NotBlank(message = "Password must not be blank")
     private String password;
 
-    public LoginRequest() {
-        // Required for frameworks (like Spring/Jackson) to properly deserialize
-        // JSON or form data into this object, maintaining JavaBean conventions.
-    }
+    public LoginRequest() {}
 
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email;}
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public void setEmail(String email) { this.email = email;}
 
-    public String getPassword() {
-        return password;
-    }
+    public String getPassword() { return password;}
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public void setPassword(String password) { this.password = password; }
 }

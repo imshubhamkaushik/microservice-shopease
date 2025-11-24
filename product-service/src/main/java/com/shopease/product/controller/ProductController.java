@@ -1,35 +1,72 @@
 package com.shopease.product.controller;
 
+import com.shopease.product.dto.CreateProductRequest;
+import com.shopease.product.dto.ProductResponse;
 import com.shopease.product.model.Product;
 import com.shopease.product.repository.ProductRepository;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/products")
-@CrossOrigin(origins = "*") // allow requests from frontend
+@CrossOrigin(origins = "http://localhost:3000") // allow requests from frontend
 public class ProductController {
+
     private final ProductRepository repo;
 
     public ProductController(ProductRepository repo) {
         this.repo = repo;
     }
 
+    /**
+     * List products as ProductResponse DTOs
+     */
     @GetMapping
-    public List<Product> all() {
-        return repo.findAll();
+    public List<ProductResponse> listAll() {
+        return repo.findAll().stream()
+                .map(p -> new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice()))
+                .collect(Collectors.toList());
     }
 
+    /**
+     * Create product with validation
+     */
     @PostMapping
-    @SuppressWarnings("null")
-    public Product create(@RequestBody Product p) {
-        return repo.save(p);
+    public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest req) {
+        Product p = new Product();
+        p.setName(req.getName());
+        p.setDescription(req.getDescription());
+        p.setPrice(req.getPrice());
+        Product saved = repo.save(p);
+        ProductResponse resp = new ProductResponse(saved.getId(), saved.getName(), saved.getDescription(),
+                saved.getPrice());
+        return ResponseEntity.ok(resp);
     }
 
+    /**
+     * Get single product
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getOne(@PathVariable long id) {
-        return repo.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ProductResponse> getOne(@PathVariable Long id) {
+        return repo.findById(id)
+                .map(p -> ResponseEntity
+                        .ok(new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice())))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Delete product
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        if (!repo.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        repo.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
