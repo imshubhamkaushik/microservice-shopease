@@ -5,25 +5,41 @@ userService:
   image:
     repository: "user-service"
     tag: "latest"
+    pullPolicy: "IfNotPresent"
   service:
     port: 8081
-  resources: {}
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
   env:
     SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/shopease"
     SPRING_DATASOURCE_USERNAME: "postgres"
     SPRING_DATASOURCE_PASSWORD: "postgres"
+  replicaCount: 1
 
 productService:
   image:
     repository: "product-service"
     tag: "latest"
+    pullPolicy: "IfNotPresent"
   service:
     port: 8082
-  resources: {}
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
   env:
     SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/shopease"
     SPRING_DATASOURCE_USERNAME: "postgres"
     SPRING_DATASOURCE_PASSWORD: "postgres"
+  replicaCount: 1
 
 frontendService:
   image:
@@ -31,7 +47,13 @@ frontendService:
     tag: "latest"
   service:
     port: 80
-  resources: {}
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
 
 postgres:
   image: postgres
@@ -40,6 +62,10 @@ postgres:
   password: postgres
   db: shopease
   port: 5432
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 5Gi
 
 ingress:
   enabled: true

@@ -11,7 +11,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/products")
@@ -24,16 +23,14 @@ public class ProductController {
         this.repo = repo;
     }
 
-    /**
-     * List products as ProductResponse DTOs
-     */
+    // List products as ProductResponse DTOs
     @GetMapping
     public List<ProductResponse> listAll() {
         return repo.findAll().stream()
                 .map(p -> new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice()))
-                .collect(Collectors.toList());
+                .toList();
     }
-
+    
     // Create product with validation
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest req) {
@@ -54,7 +51,7 @@ public class ProductController {
 
     // Get single product
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getOne(@PathVariable Long id) {
+    public ResponseEntity<ProductResponse> getOne(@PathVariable long id) {
         return repo.findById(id)
                 .map(p -> ResponseEntity
                         .ok(new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice())))
@@ -63,7 +60,7 @@ public class ProductController {
 
     // Delete product
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable long id) {
         if (!repo.existsById(id)) {
             return ResponseEntity.notFound().build();
         }

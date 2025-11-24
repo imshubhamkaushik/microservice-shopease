@@ -1,8 +1,11 @@
 package com.shopease.user.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopease.user.dto.CreateUserRequest;
 import com.shopease.user.dto.UserResponse;
 import com.shopease.user.service.UserService;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -10,27 +13,32 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.when;
 
 @WebMvcTest(UserController.class)
 class UserControllerTest {
 
     @Autowired
     MockMvc mvc;
+    @Autowired
+    ObjectMapper mapper;
     @MockBean
     UserService service;
 
     @Test
-    void register_returns201() throws Exception {
+    void registerReturnsCreated() throws Exception {
+        CreateUserRequest req = new CreateUserRequest();
+        req.setName("John");
+        req.setEmail("john@example.com");
+        req.setPassword("Password1");
+
         when(service.register(any())).thenReturn(new UserResponse(1L, "John", "john@example.com"));
 
         mvc.perform(post("/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"name":"John","email":"john@example.com","password":"Password1"}
-                        """))
+                .content(mapper.writeValueAsString(req)))
                 .andExpect(status().isCreated());
     }
 }
