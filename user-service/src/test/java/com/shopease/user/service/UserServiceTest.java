@@ -31,6 +31,7 @@ class UserServiceTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     void registerSucceeds() {
         CreateUserRequest req = new CreateUserRequest();
         req.setName("Name");
