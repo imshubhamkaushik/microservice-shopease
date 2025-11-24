@@ -12,6 +12,8 @@ spec:
       labels:
         app: user-service
     spec:
+      servicesAccountName: user-service-sa
+      automountServiceAccountToken: false
       containers:
         - name: user-service
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.userService.image.repository }}:{{ .Values.userService.image.tag }}"

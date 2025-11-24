@@ -12,6 +12,8 @@ spec:
       labels:
         app: product-service
     spec:
+      servicesAccountName: product-service-sa
+      automountServiceAccountToken: false
       containers:
         - name: product-service
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.productService.image.repository }}:{{ .Values.productService.image.tag }}"
