@@ -1,7 +1,6 @@
 package com.shopease.user.service;
 
-import com.shopease.user.dto.CreateUserRequest;
-import com.shopease.user.dto.LoginRequest;
+import com.shopease.user.dto.*;
 import com.shopease.user.model.User;
 import com.shopease.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;

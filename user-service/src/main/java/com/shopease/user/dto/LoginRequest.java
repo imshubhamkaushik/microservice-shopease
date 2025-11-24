@@ -12,7 +12,10 @@ public class LoginRequest {
     @NotBlank(message = "Password must not be blank")
     private String password;
 
-    public LoginRequest() {}
+    public LoginRequest() {
+        /* No-arg constructor required by frameworks (e.g. Jackson, Hibernate)
+           for deserialization and reflective instantiation; intentionally left empty. */
+    }
 
     public String getEmail() { return email;}
 

@@ -7,7 +7,9 @@ import com.shopease.product.repository.ProductRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,9 +34,7 @@ public class ProductController {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Create product with validation
-     */
+    // Create product with validation
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest req) {
         Product p = new Product();
@@ -42,14 +42,17 @@ public class ProductController {
         p.setDescription(req.getDescription());
         p.setPrice(req.getPrice());
         Product saved = repo.save(p);
-        ProductResponse resp = new ProductResponse(saved.getId(), saved.getName(), saved.getDescription(),
-                saved.getPrice());
-        return ResponseEntity.ok(resp);
+        ProductResponse resp = new ProductResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getPrice());
+
+        URI location = ServletUriComponentsBuilder
+            .fromCurrentRequest()
+            .path("/{id}")
+            .buildAndExpand(saved.getId())
+            .toUri();
+        return ResponseEntity.created(location).body(resp);
     }
 
-    /**
-     * Get single product
-     */
+    // Get single product
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getOne(@PathVariable Long id) {
         return repo.findById(id)
@@ -58,9 +61,7 @@ public class ProductController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Delete product
-     */
+    // Delete product
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!repo.existsById(id)) {

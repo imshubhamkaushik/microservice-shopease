@@ -9,7 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 /**
  * Business logic for users:
@@ -52,21 +52,25 @@ public class UserService {
         return repo.findByEmail(req.getEmail())
                 .filter(u -> passwordEncoder.matches(req.getPassword(), u.getPassword()))
                 .map(u -> new UserResponse(u.getId(), u.getName(), u.getEmail()))
-                .orElse(null);
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password")); // 3. Throwing exception is usually safer than returning null
     }
 
     // List all users as DTOs (no passwords)
     public List<UserResponse> listAll() {
-        return repo.findAll()
+        return Collections.unmodifiableList(repo.findAll()
                 .stream()
                 .map(u -> new UserResponse(u.getId(), u.getName(), u.getEmail()))
-                .collect(Collectors.toList());
+                .toList());
     }
 
     // Delete user by id, return true if deleted, false if not found
     public boolean deleteById(Long id) {
-        if (!repo.existsById(id))
+        if (id == null) {
             return false;
+        }
+        if (!repo.existsById(id)) {
+            return false;
+        }
         repo.deleteById(id);
         return true;
     }

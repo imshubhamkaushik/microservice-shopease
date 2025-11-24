@@ -20,6 +20,8 @@ public class CreateUserRequest {
     private String password;
 
     public CreateUserRequest() {
+        /* Default constructor required by frameworks (e.g., Jackson/JAXB/Jakarta) for
+           deserialization/instantiation; intentionally left empty. */
     }
 
     public String getName() {

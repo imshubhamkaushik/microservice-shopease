@@ -8,7 +8,7 @@ pipeline {
         PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:latest"
         FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:latest"
         
-        HELM_CHART_DIR = "helm/shopease-chart" // Directory for Helm chart, can use different directory
+        HELM_CHART_DIR = "helm/shopease-hc" // Directory for Helm chart, can use different directory
         
         SONARQUBE = "sonarqube" // Jenkins credential ID for SonarQube, can use different Id as per your choice
         DOCKER_CREDENTIALS = "dockerhub" // Jenkins credential ID for dockerhub, can use different Id as per your choice
@@ -85,7 +85,7 @@ pipeline {
         stage('Deploy to Kubernetes via Helm') {
             steps {
                 withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
-                    bat "helm upgrade --install shopease helm/shopease-chart"
+                    bat "helm upgrade --install shopease helm/shopease-hc"
                 }
             }
         }
@@ -93,11 +93,7 @@ pipeline {
 
     // Post Actions
     post {
-        success {
-            echo 'Build and deployment successful!!!'
-        }
-        failure {
-            echo 'Pipeline Failed!!! Check Jenkins logs!!!'
-        }
+        success { echo 'Build and deployment successful!!!' }
+        failure { echo 'Pipeline Failed!!! Check Jenkins logs!!!' }
     }
 }
