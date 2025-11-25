@@ -12,7 +12,6 @@ spec:
       labels:
         app: product-service
     spec:
-      servicesAccountName: product-service-sa
       automountServiceAccountToken: false
       containers:
         - name: product-service
@@ -37,7 +36,6 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
-          
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
@@ -46,6 +44,7 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
+          replicas: {{ .Values.productService.replicaCount | default 1 }}
 ---
 apiVersion: v1
 kind: Service
