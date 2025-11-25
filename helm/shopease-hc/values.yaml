@@ -1,6 +1,29 @@
 global:
   imageRegistry: "docker.io/imshubhamkaushik"
 
+ingress:
+  enabled: true
+  host: shop.local
+  paths:
+    frontend: /
+    users: /users
+    products: /products
+
+frontendService:
+  image:
+    repository: "frontend-service"
+    tag: "latest"
+  replicaCount: 1
+  service:
+    port: 80
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
 userService:
   image:
     repository: "user-service"
@@ -20,6 +43,9 @@ userService:
     SPRING_DATASOURCE_USERNAME: "postgres"
     SPRING_DATASOURCE_PASSWORD: "postgres"
   replicaCount: 1
+  metrics:
+    enabled: true
+    path: /actuator/prometheus
 
 productService:
   image:
@@ -40,20 +66,9 @@ productService:
     SPRING_DATASOURCE_USERNAME: "postgres"
     SPRING_DATASOURCE_PASSWORD: "postgres"
   replicaCount: 1
-
-frontendService:
-  image:
-    repository: "frontend-service"
-    tag: "latest"
-  service:
-    port: 80
-  resources:
-    requests:
-      cpu: "50m"
-      memory: "64Mi"
-    limits:
-      cpu: "200m"
-      memory: "256Mi"
+  metrics:
+    enabled: true
+    path: /actuator/prometheus
 
 postgres:
   image: postgres
@@ -62,15 +77,12 @@ postgres:
   password: postgres
   db: shopease
   port: 5432
-  persistence:
-    enabled: true
-    storageClass: ""
+  storage:
     size: 5Gi
 
-ingress:
-  enabled: true
-  host: shop.local
-  paths:
-    frontend: /
-    users: /users
-    products: /products
+prometheus:
+  enabled: false
+
+grafana:
+  enabled: false
+

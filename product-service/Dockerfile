@@ -15,8 +15,10 @@ FROM gcr.io/distroless/java17:nonroot
 WORKDIR /app
 
 # Copy only the JAR from build stage
-COPY --from=build /app/target/product-service-0.0.1-SNAPSHOT.jar /app/app.jar
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8082
 
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -q --spider http://localhost:8082/actuator/health || exit 1
+
 # Run the JAR
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]

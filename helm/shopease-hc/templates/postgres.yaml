@@ -1,5 +1,14 @@
 # 1. Persistent Volume Claim Template
 #    This replaces the 'volumes' section in your Deployment
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+type: Opaque
+stringData:
+  POSTGRES_USER: "{{ .Values.postgres.username | default "postgres" }}"
+  POSTGRES_PASSWORD: "{{ .Values.postgres.password | default "postgres" }}"
+---
 apiVersion: apps/v1
 kind: StatefulSet # Use StatefulSet for stable database deployment
 metadata:
@@ -22,31 +31,46 @@ spec:
           # NOTE: Helm templating is preserved
           image: "{{ .Values.postgres.image }}:{{ .Values.postgres.tag }}"
           ports:
-            - containerPort: {{ .Values.postgres.port }}
+            - containerPort: {{ .Values.postgres.port | default 5432 }}
+              name: pg
           env:
             - name: POSTGRES_USER
-              value: "{{ .Values.postgres.username }}"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
-              value: "{{ .Values.postgres.password }}"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
-              value: "{{ .Values.postgres.db }}"
+              value: "{{ .Values.postgres.db | default "shopease" }}"
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U $(printenv POSTGRES_USER)
+            initialDelaySeconds: 5
+            periodSeconds: 10
           volumeMounts:
             # This name must match the volumeClaimTemplates name
-            - name: postgres-data
+            - name: pgdata
               mountPath: /var/lib/postgresql/data
 
   # --- PVC AUTOPROVISIONING (CRITICAL FOR DATA PERSISTENCE) ---
   volumeClaimTemplates:
     - metadata:
-        name: postgres-data # Name used in the volumeMounts section
+        name: pgdata # Name used in the volumeMounts section
       spec:
         accessModes: ["ReadWriteOnce"] # Only one pod can mount it
-        storageClassName: standard
+        # storageClassName: {{ .Values.global.storageClass | default "" | quote }} # Set your StorageClass if needed
         resources:
           requests:
-            storage: 5Gi # Change this to your required disk size
+            storage: {{ .Values.postgres.storage.size | default "5Gi" }} # Change this to your required disk size
         # NOTE: For Minikube, this uses the default StorageClass
 ---
 # 2. Service Definition (Remains the same for DNS)
@@ -54,6 +78,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
+  labels:
+    app: postgres
 spec:
   type: ClusterIP
   selector:

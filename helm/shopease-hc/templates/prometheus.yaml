@@ -1,69 +1,33 @@
-apiVersion: v1
-kind: ServiceAccount
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
 metadata:
-  name: prometheus
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: prometheus
+  name: shopease-user-services
   labels:
-    app: prometheus
+    release: prometheus
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: prometheus
-  template:
-    metadata:
-      labels:
-        app: prometheus
-    spec:
-      serviceAccountName: prometheus
-      containers:
-        - name: prometheus
-          image: prom/prometheus:latest
-          args:
-            - "--config.file=/etc/prometheus/prometheus.yml"
-            - "--storage.tsdb.path=/prometheus/"
-          ports:
-            - containerPort: 9090
-          volumeMounts:
-            - name: prometheus-config
-              mountPath: /etc/prometheus
-      volumes:
-        - name: prometheus-config
-          configMap:
-            name: prometheus-config
+      app: user-service
+  namespaceSelector:
+    any: true
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 15s
 ---
-apiVersion: v1
-kind: ConfigMap
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
 metadata:
-  name: prometheus-config
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 15s
-
-    scrape_configs:
-      - job_name: 'user-service'
-        metrics_path: '/actuator/prometheus'
-        static_configs:
-          - targets: ['user-service:8081']
-      
-      - job_name: 'product-service'
-        metrics_path: '/actuator/prometheus'
-        static_configs:
-          - targets: ['product-service:8082']
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: prometheus
+  name: shopease-product-services
+  labels:
+    release: prometheus
 spec:
-  type: ClusterIP
   selector:
-    app: prometheus
-  ports:
-    - port: 9090
-      targetPort: 9090
+    matchLabels:
+      app: product-service
+  namespaceSelector:
+    any: true
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 15s

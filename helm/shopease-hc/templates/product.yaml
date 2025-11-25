@@ -2,8 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: product-service
+  labels:
+    app: product-service
 spec:
-  replicas: 1
+  replicas: {{ .Values.productService.replicaCount | default 1 }}
   selector:
     matchLabels:
       app: product-service
@@ -11,8 +13,34 @@ spec:
     metadata:
       labels:
         app: product-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "{{ .Values.productService.metrics.path | default "/actuator/prometheus" }}"
+        prometheus.io/port: "{{ .Values.productService.service.port | default 8082 }}"
     spec:
       automountServiceAccountToken: false
+
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for postgres at postgres:{{ .Values.postgres.port | default 5432 }}..."
+              until pg_isready -h postgres -p {{ .Values.postgres.port | default 5432 }} -U {{ .Values.postgres.username | default "postgres" }}; do
+                echo "Postgres is unavailable - sleeping"
+                sleep 5
+              done
+              echo "Postgres is up - continuing"
+      
       containers:
         - name: product-service
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.productService.image.repository }}:{{ .Values.productService.image.tag }}"
@@ -27,7 +55,25 @@ spec:
               value: "{{ .Values.productService.env.SPRING_DATASOURCE_USERNAME }}"
             - name: SPRING_DATASOURCE_PASSWORD
               value: "{{ .Values.productService.env.SPRING_DATASOURCE_PASSWORD }}"
-          resources: {{- toYaml .Values.productService.resources | indent 12 }}
+          resources: {{- toYaml .Values.productService.resources | nindent 12 }}
+          
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+            timeoutSeconds: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -36,20 +82,14 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: http
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          replicas: {{ .Values.productService.replicaCount | default 1 }}
+          
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: product-service
+  labels:
+    app: product-service
 spec:
   type: ClusterIP
   selector:

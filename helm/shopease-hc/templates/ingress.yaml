@@ -8,11 +8,11 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.ingress.host }}
+    - host: {{ .Values.ingress.host | default "shopease.local" }}
       http:
         paths:
           # React Frontend (handles SPA routes)
-          - path: {{ .Values.ingress.paths.frontend }}
+          - path: {{ .Values.ingress.paths.frontend | default "/" }}
             pathType: Prefix
             backend:
               service:
@@ -20,7 +20,7 @@ spec:
                 port:
                   number: {{ .Values.frontendService.service.port | int }}
           # User Service
-          - path: {{ .Values.ingress.paths.users }}
+          - path: {{ .Values.ingress.paths.users | default "/users" }}
             pathType: Prefix
             backend:
               service:
@@ -29,7 +29,7 @@ spec:
                   number: {{ .Values.userService.service.port | int }}
 
           # Product service
-          - path: {{ .Values.ingress.paths.products }}
+          - path: {{ .Values.ingress.paths.products | default "/products" }}
             pathType: Prefix
             backend:
               service:
@@ -37,20 +37,3 @@ spec:
                 port:
                   number: {{ .Values.productService.service.port | int }}
           
-          # Prometheus
-          - path: /prometheus
-            pathType: Prefix
-            backend:
-              service:
-                name: prometheus
-                port:
-                  number: 9090
-
-          # Grafana
-          - path: /grafana
-            pathType: Prefix
-            backend:
-              service:
-                name: grafana
-                port:
-                  number: 3000
