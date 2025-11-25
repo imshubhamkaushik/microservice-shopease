@@ -1,0 +1,7 @@
+# Add vulnerability IDs you want Trivy to ignore.
+# Example:
+# CVE-2021-44228
+# CVE-2022-22965
+# RUSTSEC-2020-0071
+#
+# Populate this list after reviewing Trivy reports during CI.

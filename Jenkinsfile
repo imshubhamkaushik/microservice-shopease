@@ -24,6 +24,30 @@ pipeline {
             }
         }
 
+        // Unit Tests for Backend Services
+        stage('Unit Tests for Backend Services') {
+            parallel {
+                userService: {
+                    stage('"User Service" Unit Tests') {
+                        steps {
+                            dir('user-service') {
+                                bat 'mvn -B test -Dskiptests=false '
+                            }
+                        }
+                    }
+                }
+                productService: {
+                    stage('"Product Service" Unit Tests') {
+                        steps {
+                            dir('product-service') {
+                                bat 'mvn -B test -Dskiptests=false '
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // User Service Backend Build, SonarQube Analysis, and Quality Gate
         stage('Build "User Service", SonarQube Analysis and Quality Gate') {
             steps {
@@ -71,7 +95,20 @@ pipeline {
                 bat "docker build -t ${PRODUCT_SERVICE_IMAGE} ./product-service"
                 bat "docker build -t ${FRONTEND_SERVICE_IMAGE} ./frontend"
             }
-            {
+        }
+        
+        // Trivy Scan Docker Images
+        stage('Trivy Scan Docker Images') {
+            steps {
+                bat "trivy image --severity HIGH,CRITICAL ${USER_SERVICE_IMAGE}"
+                bat "trivy image --severity HIGH,CRITICAL ${PRODUCT_SERVICE_IMAGE}"
+                bat "trivy image --severity HIGH,CRITICAL ${FRONTEND_SERVICE_IMAGE}"
+            }
+        }
+
+        // Push Docker Images to Registry
+        stage('Push Docker Images to Registry') {
+            steps {
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     bat "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
                     bat "docker push ${USER_SERVICE_IMAGE}"
