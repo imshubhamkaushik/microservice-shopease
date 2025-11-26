@@ -16,7 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ProductRepositoryIntegrationTest {
 
     @Container
-    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
+    @SuppressWarnings("resource")
+    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("test");

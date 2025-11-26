@@ -123,20 +123,33 @@
                   <goal>prepare-agent</goal>
                 </goals>
               </execution>
-            <execution>
-              <id>report</id>
-              <phase>test</phase>
-              <goals>
-                <goal>report</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.sonarsource.scanner.maven</groupId>
-          <artifactId>sonar-maven-plugin</artifactId>
-          <version>3.10.0.2594</version>
-        </plugin>
+              <execution>
+                <id>report</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonarsource.scanner.maven</groupId>
+            <artifactId>sonar-maven-plugin</artifactId>
+            <version>3.10.0.2594</version>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>3.0.0-M8</version>
+            <configuration>
+              <useSystemClassLoader>false</useSystemClassLoader>
+              <includes>
+                <include>**/*Test.java</include>
+              </includes>
+              <forkCount>1</forkCount>
+              <reuseForks>true</reuseForks>
+           </configuration>
+          </plugin>
 
       </plugins>
   </build>

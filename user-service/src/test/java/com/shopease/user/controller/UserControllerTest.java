@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(UserController.class)
@@ -36,9 +37,10 @@ class UserControllerTest {
 
         when(service.register(any())).thenReturn(new UserResponse(1L, "John", "john@example.com"));
 
-        mvc.perform(post("/users/register")
+        mvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(req)))
+                .andDo(print())
                 .andExpect(status().isCreated());
     }
 }
