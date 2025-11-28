@@ -34,9 +34,9 @@ const Products = () => {
     if (!confirm) return;
     try {
       await deleteProduct(id);
-      fetchProducts();
+      await fetchProducts();
     } catch (err) {
-      console.error(err);
+      console.error("Error deleting product:", err);
       alert("Failed to delete product.");
     }
   };

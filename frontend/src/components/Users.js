@@ -12,9 +12,10 @@ const Users = () => {
     setError("");
     try {
       const data = await getUsers();
+      console.log("Fetched users:", data);
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error fetching users:",err);
+      console.error("Error fetching users:", err);
       setError("Failed to fetch users.");
     } finally {
       setLoading(false);
@@ -30,13 +31,13 @@ const Users = () => {
   };
 
   const handleDelete = async (id) => {
-    const shouldDelete = globalThis.comfirm("Delete this user?");
+    const shouldDelete = globalThis.confirm("Delete this user?");
     if (!shouldDelete) return;
     try {
       await deleteUser(id);
-      fetchUsers();
+      await fetchUsers();
     } catch (err) {
-      console.error(err);
+      console.error("Error deleting user:", err);
       alert("Failed to delete user.");
     }
   };

@@ -60,7 +60,7 @@ public class ProductController {
 
     // Delete product
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable long id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") long id) {
         if (!repo.existsById(id)) {
             return ResponseEntity.notFound().build();
         }

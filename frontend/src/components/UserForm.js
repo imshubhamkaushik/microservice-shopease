@@ -16,12 +16,24 @@ const UserForm = ({ onUserAdded }) => {
     }
     setSubmitting(true);
     try {
-      await createUser({ name: name.trim(), email: email.trim(), password });
+      console.log("Creating user:", { name, email, password });
+      const created = await createUser({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
+      console.log("User created:", created);
+
+      if (typeof onUserAdded === "function") {
+        await onUserAdded(); // will refetech the user list in parent
+      }
+
       setName("");
       setEmail("");
-      if (onUserAdded) onUserAdded();
+      setPassword("");
+      alert("User added successfully.");
     } catch (err) {
-      console.error(err);
+      console.error("Error in creating user:", err);
       alert("Failed to add user.");
     } finally {
       setSubmitting(false);
@@ -29,14 +41,16 @@ const UserForm = ({ onUserAdded }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
+    <form
+      onSubmit={handleSubmit}
+      style={{ display: "flex", gap: "10px", marginBottom: "20px" }}
+    >
       <input
         type="text"
         placeholder="Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
-        style={{ marginRight: "10px" }}
         disabled={submitting}
       />
       <input
@@ -45,17 +59,15 @@ const UserForm = ({ onUserAdded }) => {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
-        style={{ marginRight: "10px" }}
         disabled={submitting}
       />
       <input
         type="password"
         placeholder="Password"
         value={password}
-        disabled={submitting}
         onChange={(e) => setPassword(e.target.value)}
         required
-        style={{ marginRight: "10px" }}
+        disabled={submitting}
       />
       <button type="submit" disabled={submitting}>
         {submitting ? "Adding..." : "Add User"}

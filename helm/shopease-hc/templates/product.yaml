@@ -13,13 +13,8 @@ spec:
     metadata:
       labels:
         app: product-service
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/path: "{{ .Values.productService.metrics.path | default "/actuator/prometheus" }}"
-        prometheus.io/port: "{{ .Values.productService.service.port | default 8082 }}"
     spec:
       automountServiceAccountToken: false
-
       initContainers:
         - name: wait-for-postgres
           image: postgres:16-alpine
@@ -40,7 +35,6 @@ spec:
                 sleep 5
               done
               echo "Postgres is up - continuing"
-      
       containers:
         - name: product-service
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.productService.image.repository }}:{{ .Values.productService.image.tag }}"
@@ -64,7 +58,6 @@ spec:
             periodSeconds: 5
             failureThreshold: 30
             timeoutSeconds: 3
-          
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
@@ -73,7 +66,6 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
-          
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -82,7 +74,6 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
-          
 ---
 apiVersion: v1
 kind: Service

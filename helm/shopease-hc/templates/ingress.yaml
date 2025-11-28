@@ -20,7 +20,7 @@ spec:
                 port:
                   number: {{ .Values.frontendService.service.port | int }}
           # User Service
-          - path: {{ .Values.ingress.paths.users | default "/users" }}
+          - path: {{ .Values.ingress.paths.users | default "/api/users" }}
             pathType: Prefix
             backend:
               service:
@@ -29,7 +29,7 @@ spec:
                   number: {{ .Values.userService.service.port | int }}
 
           # Product service
-          - path: {{ .Values.ingress.paths.products | default "/products" }}
+          - path: {{ .Values.ingress.paths.products | default "/api/products" }}
             pathType: Prefix
             backend:
               service:

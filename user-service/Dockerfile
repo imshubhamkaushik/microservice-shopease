@@ -15,7 +15,7 @@ FROM gcr.io/distroless/java17:nonroot
 WORKDIR /app
 
 # Copy only the JAR from build stage
-COPY --from=build /app/target/*.jar /app.jar
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8081
 
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -q --spider http://localhost:8081/actuator/health || exit 1
