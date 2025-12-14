@@ -369,3 +369,183 @@ Horizontal Pod Autoscaling
 Logging stack (ELK or Loki)
 
 Service Mesh (Istio / Linkerd)
+
+
+
+
+
+
+# 🛒 Shopease – Microservices E-Commerce Platform with Full DevOps CI/CD
+
+Shopease is a full-stack **microservices-based e-commerce platform** built using **Spring Boot, React, PostgreSQL** and deployed using a **complete DevOps toolchain** including **Docker, Jenkins, Helm, Kubernetes, Trivy, SonarQube, and GitHub Actions**.
+
+This project demonstrates **real-world DevOps practices** such as:
+- CI/CD automation
+- Containerization
+- Security scanning
+- Infrastructure deployment
+- Kubernetes orchestration
+- Helm-based application packaging
+
+---
+
+## 🚀 Tech Stack
+
+### Backend
+- Java 17
+- Spring Boot
+- Spring Data JPA
+- Spring Security
+- PostgreSQL
+
+### Frontend
+- React
+- NGINX
+
+### DevOps & Cloud
+- Docker & Docker Compose
+- Jenkins (CI/CD)
+- Kubernetes
+- Helm
+- Trivy (Security Scanning)
+- SonarQube (Code Quality)
+- GitHub Actions (CI placeholder)
+- Bash Scripting
+
+---
+
+## 📦 Microservices Architecture
+
+| Service | Description |
+|--------|-------------|
+| User Service | User Registration, Login, Password Encryption |
+| Product Service | Product Management APIs |
+| Frontend | React UI served through NGINX |
+| PostgreSQL | Centralized database |
+
+---
+
+## 🏗 Project Structure
+
+microservice-shopease/
+│
+├── frontend/ # React UI + NGINX
+│
+├── user-service/ # Spring Boot User Microservice
+├── product-service/ # Spring Boot Product Microservice
+│
+├── helm/ # Helm charts for Kubernetes
+├── ci/ # Trivy security scans
+│
+├── docker-compose.yml # Local multi-container setup
+├── Jenkinsfile # Full CI/CD pipeline
+├── .github/workflows/ # GitHub Actions CI workflow (WIP)
+└── README.md
+
+yaml
+Copy code
+
+---
+
+## 🔄 CI/CD Pipeline (Jenkins)
+
+The Jenkins pipeline performs:
+
+1. **Code Checkout**
+2. **Maven Build & Unit Testing**
+3. **SonarQube Code Quality Scan**
+4. **Docker Image Build**
+5. **Trivy Security Scan**
+6. **Docker Image Push to DockerHub**
+7. **HelM-Based Kubernetes Deployment**
+
+All credentials are securely managed via **Jenkins Credentials**:
+- DockerHub
+- SonarQube
+- Kubernetes Config
+- Database Secrets
+
+---
+
+## 🐳 Running Project Locally (Docker Compose)
+
+### 1️⃣ Set Environment Variables
+
+Create `.env` file:
+
+POSTGRES_USERNAME=shopease
+POSTGRES_PASSWORD=shopease
+POSTGRES_DB=shopease_db
+
+perl
+Copy code
+
+### 2️⃣ Start Services
+
+```bash
+docker-compose up --build
+3️⃣ Access Applications
+Service	URL
+Frontend	http://localhost:3000
+User API	http://localhost:8081
+Product API	http://localhost:8082
+PostgreSQL	localhost:5432
+
+☸ Kubernetes Deployment Using Helm
+bash
+Copy code
+helm upgrade --install shopease helm/shopease-hc
+Verify:
+
+bash
+Copy code
+kubectl get pods
+kubectl get svc
+🔐 Security & Reliability Features
+✅ Password encryption using BCrypt
+
+✅ Rate limiting filter
+
+✅ Centralized exception handling
+
+✅ Trivy container vulnerability scanning
+
+✅ Health checks for PostgreSQL
+
+✅ Docker image hardening
+
+🧪 Testing
+Each microservice includes:
+
+Unit tests for Controllers
+
+Unit tests for Service layers
+
+Run:
+
+bash
+Copy code
+mvn test
+📊 Code Quality
+SonarQube integrated into Jenkins
+
+Static code analysis on every build
+
+✅ Current Project Status
+✔ CI/CD Automation
+✔ Dockerized Microservices
+✔ Helm-based Kubernetes Deployment
+✔ Security Scanning
+✔ PostgreSQL Integration
+✔ Frontend–Backend Connectivity
+
+📌 Future Enhancements
+GitHub Actions full CI pipeline
+
+Prometheus + Grafana Monitoring
+
+Centralized Logging (ELK / OpenSearch)
+
+Secrets Management (Vault / K8s Secrets)
+
+Autoscaling & Load Testing

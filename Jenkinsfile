@@ -103,9 +103,9 @@ pipeline {
         // Trivy Scan Docker Images
         stage('Trivy Scan Docker Images') {
             steps {
-                bat "trivy image --severity HIGH,CRITICAL ${USER_SERVICE_IMAGE}"
-                bat "trivy image --severity HIGH,CRITICAL ${PRODUCT_SERVICE_IMAGE}"
-                bat "trivy image --severity HIGH,CRITICAL ${FRONTEND_SERVICE_IMAGE}"
+                bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${USER_SERVICE_IMAGE}"
+                bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${PRODUCT_SERVICE_IMAGE}"
+                bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${FRONTEND_SERVICE_IMAGE}"
             }
         }
 
@@ -133,11 +133,18 @@ pipeline {
             }
         }
 
+        // Trivy Scan Helm/Kubernetes Manifests
+        stage('Trivy Scan Helm/Kubernetes Manifests') {
+            steps {
+                // Scan Helm templates for misconfigurations
+                bat "trivy config --severity HIGH,CRITICAL --exit-code 1 ${HELM_CHART_DIR}"
+            }
+        }
         // Deploy to Kubernetes Using Helm
         stage('Deploy to Kubernetes Using Helm') {
             steps {
                 withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
-                    bat "helm upgrade --install shopease helm/shopease-hc"
+                    bat "helm upgrade --install shopease ${HELM_CHART_DIR}"
                 }
             }
         }
