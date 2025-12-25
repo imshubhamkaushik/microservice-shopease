@@ -127,7 +127,7 @@ pipeline {
                 withCredentials([string(credentialsId: "${DB_PASSWORD_CREDENTIAL_ID}", variable: 'DB_PASSWORD')]) {
                     withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
                         // Use kubectl to create/update secret in the specified namespace
-                        bat "kubectl create secret generic shopease-secrets --from-literal=DB_PASSWORD=%DB_PASSWORD% --namespace=${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
+                        bat "kubectl create secret generic shopease-secrets --from-literal=DB_PASSWORD=%DB_PASSWORD% --from-literal=DB_USER=postgres --dry-run=client -o yaml | kubectl apply -f -"
                     }
                 }
             }
@@ -140,6 +140,7 @@ pipeline {
                 bat "trivy config --severity HIGH,CRITICAL --exit-code 1 ${HELM_CHART_DIR}"
             }
         }
+        
         // Deploy to Kubernetes Using Helm
         stage('Deploy to Kubernetes Using Helm') {
             steps {

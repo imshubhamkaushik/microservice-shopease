@@ -13,8 +13,6 @@ spec:
     metadata:
       labels:
         app: frontend
-      annotations:
-        prometheus.io/scrape: "false"
     spec:
       containers:
         - name: frontend

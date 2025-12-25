@@ -1,5 +1,5 @@
 apiVersion: v2
-name: shopease-chart
+name: shopease-hc
 description: A simple microservices app with frontend + backend using Ingress routing
 type: application
 version: 0.1.0

@@ -41,11 +41,7 @@ userService:
   env:
     SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/shopease"
     SPRING_DATASOURCE_USERNAME: "postgres"
-    SPRING_DATASOURCE_PASSWORD: "postgres"
   replicaCount: 1
-  metrics:
-    enabled: true
-    path: /actuator/prometheus
 
 productService:
   image:
@@ -64,24 +60,13 @@ productService:
   env:
     SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/shopease"
     SPRING_DATASOURCE_USERNAME: "postgres"
-    SPRING_DATASOURCE_PASSWORD: "postgres"
   replicaCount: 1
-  metrics:
-    enabled: true
-    path: /actuator/prometheus
 
 postgres:
   image: postgres
   tag: "16-alpine"
   username: postgres
-  password: postgres
   db: shopease
   port: 5432
   storage:
     size: 5Gi
-
-prometheus:
-  enabled: false
-
-grafana:
-  enabled: false

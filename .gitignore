@@ -50,3 +50,4 @@ tmp/
 frontend/build/
 user-service/target/
 product-service/target/
+*.zip

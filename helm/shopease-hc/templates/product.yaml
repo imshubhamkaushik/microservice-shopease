@@ -23,7 +23,7 @@ spec:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: postgres-secret
+                  name: shopease-secret
                   key: POSTGRES_PASSWORD
           command:
             - sh
@@ -48,7 +48,10 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               value: "{{ .Values.productService.env.SPRING_DATASOURCE_USERNAME }}"
             - name: SPRING_DATASOURCE_PASSWORD
-              value: "{{ .Values.productService.env.SPRING_DATASOURCE_PASSWORD }}"
+              valueFrom:
+                secretKeyRef:
+                  name: shopease-secrets
+                  key: DB_PASSWORD
           resources: {{- toYaml .Values.productService.resources | nindent 12 }}
           
           startupProbe:

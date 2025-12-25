@@ -13,3 +13,5 @@ target/
 
 # Local config
 .env
+
+*.zip
