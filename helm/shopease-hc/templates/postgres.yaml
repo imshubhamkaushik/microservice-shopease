@@ -3,11 +3,11 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: postgres-secret
+  name: shopease-secrets
 type: Opaque
 stringData:
-  POSTGRES_USER: "{{ .Values.postgres.username | default "postgres" }}"
-  POSTGRES_PASSWORD: "{{ .Values.postgres.password | default "postgres" }}"
+  DB_USER: "{{ .Values.postgres.username | default "postgres" }}"
+  DB_PASSWORD: "{{ .Values.postgres.password | default "postgres" }}"
 ---
 apiVersion: apps/v1
 kind: StatefulSet # Use StatefulSet for stable database deployment
@@ -34,17 +34,17 @@ spec:
             - containerPort: {{ .Values.postgres.port | default 5432 }}
               name: pg
           env:
-            - name: POSTGRES_USER
+            - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: postgres-secret
-                  key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
+                  name: shopease-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: postgres-secret
-                  key: POSTGRES_PASSWORD
-            - name: POSTGRES_DB
+                  name: shopease-secrets
+                  key: DB_PASSWORD
+            - name: DB_NAME
               value: "{{ .Values.postgres.db | default "shopease" }}"
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
@@ -53,7 +53,7 @@ spec:
               command:
                 - sh
                 - -c
-                - pg_isready -U $(printenv POSTGRES_USER)
+                - pg_isready -U $(printenv DB_USER)
             initialDelaySeconds: 5
             periodSeconds: 10
           volumeMounts:
@@ -81,7 +81,6 @@ metadata:
   labels:
     app: postgres
 spec:
-  type: ClusterIP
   selector:
     app: postgres
   ports:

@@ -23,8 +23,8 @@ spec:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: shopease-secret
-                  key: POSTGRES_PASSWORD
+                  name: shopease-secrets
+                  key: DB_PASSWORD
           command:
             - sh
             - -c
@@ -40,8 +40,7 @@ spec:
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.userService.image.repository }}:{{ .Values.userService.image.tag }}"
           imagePullPolicy: {{ .Values.userService.image.pullPolicy | default "IfNotPresent" }}
           ports:
-            - name: http
-              containerPort: {{ .Values.userService.service.port | default 8081 }}
+            - containerPort: {{ .Values.userService.service.port | default 8081 }}
           env:
             - name: SPRING_DATASOURCE_URL
               value: "{{ .Values.userService.env.SPRING_DATASOURCE_URL }}"
@@ -56,14 +55,14 @@ spec:
           startupProbe:
             httpGet:
               path: /actuator/health
-              port: http
+              port: 8081
             periodSeconds: 5
             failureThreshold: 30
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: http
+              port: 8081
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -71,7 +70,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: http
+              port: 8081
             initialDelaySeconds: 30
             periodSeconds: 15
             timeoutSeconds: 5
@@ -83,12 +82,13 @@ metadata:
   name: user-service
   labels:
     app: user-service
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.userService.service.port | default 8081 }}"
+    prometheus.io/path: "/actuator/prometheus"
 spec:
-  type: ClusterIP
   selector:
     app: user-service
   ports:
-    - name: http
-      port: {{ .Values.userService.service.port | default 8081 }}
+    - port: {{ .Values.userService.service.port | default 8081 }}
       targetPort: {{ .Values.userService.service.port | default 8081 }}
-      protocol: TCP

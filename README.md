@@ -165,6 +165,73 @@ Security is treated as a first-class citizen in the CI/CD workflow.
 
 ---
 
+## Monitoring & Alerting
+
+This project implements production-style monitoring and alerting for Kubernetes-based microservices using Prometheus, Grafana, and Alertmanager.
+
+### Monitoring Architecture
+
+Prometheus is deployed inside the Kubernetes cluster and uses Kubernetes service discovery to automatically detect and scrape application metrics.
+
+Microservices expose metrics via Spring Boot Actuator (/actuator/prometheus), enabled through service annotations.
+
+Grafana queries Prometheus as a data source to visualize service health and performance.
+
+Alertmanager receives alerts from Prometheus and manages alert grouping, deduplication, and routing.
+
+Application → Prometheus → (Metrics) → Grafana
+             Prometheus → (Alerts)  → Alertmanager
+
+### Metrics Collection
+
+Prometheus dynamically scrapes services annotated with:
+
+```yaml
+prometheus.io/scrape: "true"
+prometheus.io/path: /actuator/prometheus
+prometheus.io/port: "8081"
+```
+
+Collected metrics include:
+
+  Service availability (up)
+  CPU usage (process_cpu_usage)
+  JVM heap memory usage (jvm_memory_used_bytes)
+  JVM GC pause duration (jvm_gc_pause_seconds_sum)
+
+Service names are added as labels during relabeling, enabling clean, readable dashboards and alerts.
+
+### Dashboards (Grafana)
+
+Grafana dashboards provide:
+
+  JVM Memory Usage by Service
+  CPU Usage by Service
+  Service Availability (Up/Down status)
+
+Dashboards are designed to be service-centric, avoiding pod IPs and low-level noise, making them suitable for both operational monitoring and interviews.
+
+### Alerting (Prometheus + Alertmanager)
+
+Prometheus evaluates alert rules defined via ConfigMaps and mounted into the Prometheus container.
+
+Key alerts include:
+
+  ServiceDown – triggered when a service disappears from Prometheus targets.
+  HighCPUUsage – CPU usage above 80% for sustained periods.
+  HighJVMMemoryUsage – JVM heap usage exceeding safe thresholds.
+  HighGCPauseTime – prolonged JVM garbage collection pauses.
+
+Alerts are forwarded to Alertmanager, which:
+
+  Groups related alerts
+  Prevents alert storms
+  Supports silencing and future notification integrations
+
+Alerts were validated by intentionally scaling services to zero replicas and observing alert state transitions.
+
+---
+
 ## How to Run the Project
 
 ### Prerequisites

@@ -23,8 +23,8 @@ spec:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: shopease-secret
-                  key: POSTGRES_PASSWORD
+                  name: shopease-secrets
+                  key: DB_PASSWORD
           command:
             - sh
             - -c
@@ -40,8 +40,7 @@ spec:
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.productService.image.repository }}:{{ .Values.productService.image.tag }}"
           imagePullPolicy: {{ .Values.productService.image.pullPolicy | default "IfNotPresent" }}
           ports:
-            - name: http
-              containerPort: {{ .Values.productService.service.port | default 8082 }}
+            - containerPort: {{ .Values.productService.service.port | default 8082 }}
           env:
             - name: SPRING_DATASOURCE_URL
               value: "{{ .Values.productService.env.SPRING_DATASOURCE_URL }}"
@@ -53,18 +52,17 @@ spec:
                   name: shopease-secrets
                   key: DB_PASSWORD
           resources: {{- toYaml .Values.productService.resources | nindent 12 }}
-          
           startupProbe:
             httpGet:
               path: /actuator/health
-              port: http
+              port: 8082
             periodSeconds: 5
             failureThreshold: 30
             timeoutSeconds: 3
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: http
+              port: 8082
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -72,7 +70,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: http
+              port: 8082
             initialDelaySeconds: 30
             periodSeconds: 15
             timeoutSeconds: 5
@@ -84,12 +82,13 @@ metadata:
   name: product-service
   labels:
     app: product-service
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.productService.service.port | default 8082 }}"
+    prometheus.io/path: "/actuator/prometheus"
 spec:
-  type: ClusterIP
   selector:
     app: product-service
   ports:
-    - name: http
-      port: {{ .Values.productService.service.port | default 8082 }}
+    - port: {{ .Values.productService.service.port | default 8082 }}
       targetPort: {{ .Values.productService.service.port | default 8082 }}
-      protocol: TCP

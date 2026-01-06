@@ -70,3 +70,6 @@ postgres:
   port: 5432
   storage:
     size: 5Gi
+
+monitoring:
+  enabled: true
