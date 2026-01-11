@@ -1,12 +1,12 @@
 # End-to-End DevSecOps CI/CD Pipeline for Microservices
 
-**(Jenkins · Docker · Kubernetes · Helm · SonarQube · Trivy)**
+**(Jenkins · Docker · Kubernetes · Helm · SonarQube · Trivy · Prometheus · Grafana · Bash)**
 
 ---
 
 ## Project Overview
 
-This project demonstrates the design and implementation of an end-to-end DevSecOps CI/CD pipeline for a containerized, microservices-based application.
+This project demonstrates the design and implementation of an end-to-end DevSecOps CI/CD pipeline for a containerized, microservices-based application running on Kubernetes.
 
 The primary objective is to showcase secure, automated application delivery using modern DevOps and DevSecOps practices, including:
 
@@ -15,8 +15,10 @@ The primary objective is to showcase secure, automated application delivery usin
 - Static code analysis and quality enforcement using SonarQube
 - Container and configuration security scanning using Trivy
 - Deployment and orchestration using Kubernetes and Helm
+- Monitoring and alerting using Prometheus and Grafana
+- Operational automation using Bash Scripts
 
-The project intentionally focuses on pipeline design, security integration, and deployment automation, rather than application business logic.
+The project intentionally focuses on **pipeline design, security integration, deployment automation, and observabiliy**, rather than application business logic.
 
 ---
 
@@ -29,21 +31,25 @@ Key emphasis areas:
 - Secure CI/CD pipeline design using Jenkins
 - Shift-left security using automated scanning
 - Kubernetes-based application delivery using Helm
+- Service-level observability for microservices
+- Operational automation for common day-to-day tasks
 
-Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of scope to maintain clear separation of responsibilities.
+Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of scope to maintain clear separation between **CI/CD, application delivery, and infrastructure management**.
 
 ---
 
 ## Tech Stack
 
-- CI/CD: Jenkins
-- Containers: Docker
-- Orchestration: Kubernetes
-- Package Management: Helm
-- Security & Quality: SonarQube, Trivy
-- Backend Services: Spring Boot (Microservices)
-- Frontend: React
-- Container Runtime: Linux
+- **CI/CD**: Jenkins
+- **Containers**: Docker
+- **Orchestration**: Kubernetes
+- **Package Management**: Helm
+- **Security & Quality**: SonarQube, Trivy
+- **Backend Services**: Spring Boot (Microservices)
+- **Frontend**: React
+- **Scripting & Automation**: Bash
+- **Container Runtime**: Linux
+- **Monitoring**: Prometheus, Grafana
 
 ---
 
@@ -58,6 +64,7 @@ Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of s
 - Trivy scans container images and Kubernetes manifests
 - Helm charts manage Kubernetes deployments
 - Kubernetes handles service orchestration, scaling, and health checks
+- Prometheus and Grafana provide service-level monitoring and alerting
 
  Architecture diagram will be added in a future update.
 
@@ -78,11 +85,12 @@ The Jenkins pipeline follows a stage-based DevSecOps workflow:
 9. Security scanning of Helm/Kubernetes manifests using Trivy
 10. Deployment to Kubernetes using Helm
 
-This workflow ensures secure, repeatable, and automated deployments.
+This workflow ensures **secure, repeatable, and automated deployments**.
 
 ---
 
 ## Repository Structure
+```
 microservice-shopease/
 ├── frontend/
 │   └── src/
@@ -110,12 +118,31 @@ microservice-shopease/
 │       ├── templates/
 │       └── values.yaml
 |       └── Chart.yaml
-│
+|   └── monitoring/
+|       └── README.md
+|       └── values.yaml
+|       └── monitoring/(Kept this folder for manual deployment of Prometheus, Grafana, Alertmanager without Helm)
+|           └── prometheus.yaml
+|           └── prometheus-alerts.yaml
+|           └── prometheus-rbac.yaml
+|           └── grafana.yaml
+|           └── alertmanager.yaml
+|
+├── scripts/
+│   ├── env.sh
+│   ├── check-cluster.sh
+│   ├── deploy-monitoring.sh
+│   ├── show-monitoring-info.sh
+│   ├── rollout-status.sh
+│   ├── logs.sh
+│   └── cleanup.sh
+|
 ├── .trivyignore
 ├── docker-compose.yaml
 ├── Jenkinsfile
 ├── .gitignore
 └── README.md
+```
 
 ---
 
@@ -133,8 +160,8 @@ This improves security, portability, and deployment consistency.
 
 ### Kubernetes
 
-- Services are deployed as Kubernetes Deployments
-- Health probes ensure application reliability
+- Services are deployed as **Kubernetes Deployments**
+- Health probes (startup, readiness, liveness) ensure application reliability
 - Resource requests and limits enforce controlled resource usage
 - StatefulSet with persistent storage is used for PostgreSQL
 
@@ -142,9 +169,9 @@ This improves security, portability, and deployment consistency.
 
 - Helm charts manage Kubernetes manifests
 - Values files enable environment-specific configuration
-- Helm enables versioned and repeatable deployments
+- Helm enables **versioned and repeatable deployments**
 
-This setup mirrors real-world Kubernetes deployment patterns.
+This setup mirrors **real-world Kubernetes deployment patterns**.
 
 ---
 
@@ -161,7 +188,7 @@ This setup mirrors real-world Kubernetes deployment patterns.
 - Helm and Kubernetes manifests are scanned for misconfigurations
 - Pipeline execution fails on critical security findings
 
-Security is treated as a first-class citizen in the CI/CD workflow.
+Security is treated as a **first-class citizen** throughout the CI/CD lifecycle.
 
 ---
 
@@ -171,16 +198,15 @@ This project implements production-style monitoring and alerting for Kubernetes-
 
 ### Monitoring Architecture
 
-Prometheus is deployed inside the Kubernetes cluster and uses Kubernetes service discovery to automatically detect and scrape application metrics.
+- **Prometheus** is deployed inside the Kubernetes cluster and uses Kubernetes service discovery to automatically detect and scrape application metrics.
+- **Microservices** expose metrics via Spring Boot Actuator (/actuator/prometheus), enabled through service annotations.
+- **Grafana** queries Prometheus as a data source to visualize service health and performance.
+- **Alertmanager** receives alerts from Prometheus and manages alert grouping, deduplication, and routing.
 
-Microservices expose metrics via Spring Boot Actuator (/actuator/prometheus), enabled through service annotations.
-
-Grafana queries Prometheus as a data source to visualize service health and performance.
-
-Alertmanager receives alerts from Prometheus and manages alert grouping, deduplication, and routing.
-
+```
 Application → Prometheus → (Metrics) → Grafana
              Prometheus → (Alerts)  → Alertmanager
+```
 
 ### Metrics Collection
 
@@ -189,46 +215,73 @@ Prometheus dynamically scrapes services annotated with:
 ```yaml
 prometheus.io/scrape: "true"
 prometheus.io/path: /actuator/prometheus
-prometheus.io/port: "8081"
+prometheus.io/port: "8081" / "8082"
 ```
+- Microservices expose metrics via Spring Boot Actuator (``/actuator/prometheus``)
+- Prometheus discovers targets automatically using Kubenetes-native mechanisms
 
-Collected metrics include:
+- Collected metrics include:
 
-  Service availability (up)
-  CPU usage (process_cpu_usage)
-  JVM heap memory usage (jvm_memory_used_bytes)
-  JVM GC pause duration (jvm_gc_pause_seconds_sum)
+  - Service availability (up)
+  - HTTP request rate and error rate
+  - Latency (P95) using Prometheus histograms
+  - JVM process CPU usage
+  - JVM heap memory usage
 
-Service names are added as labels during relabeling, enabling clean, readable dashboards and alerts.
+Metrics are labeled by service and namespace, enabling clean dashboards and scalable alerting.
 
-### Dashboards (Grafana)
+### Grafana Dashboards
 
 Grafana dashboards provide:
 
-  JVM Memory Usage by Service
-  CPU Usage by Service
-  Service Availability (Up/Down status)
+- Service selector variable to dynamically switch between services for multi-service monitoring
+- Service availability (UP / DOWN)
+- Request rate and 5xx error rate
+- Latency (P95)
+- CPU usage per service
+- JVM heap memory usage
 
-Dashboards are designed to be service-centric, avoiding pod IPs and low-level noise, making them suitable for both operational monitoring and interviews.
+Dashboards are designed to be **service-centric**, avoiding pod IPs and low-level noise, making them suitable for both operational monitoring.
+
+Dashboards were created via the Grafana UI and exported as JSON for version control.
 
 ### Alerting (Prometheus + Alertmanager)
 
 Prometheus evaluates alert rules defined via ConfigMaps and mounted into the Prometheus container.
 
+Alert rules are defined using PrometheusRule resources via Helm
+
 Key alerts include:
 
-  ServiceDown – triggered when a service disappears from Prometheus targets.
-  HighCPUUsage – CPU usage above 80% for sustained periods.
-  HighJVMMemoryUsage – JVM heap usage exceeding safe thresholds.
-  HighGCPauseTime – prolonged JVM garbage collection pauses.
+- **ServiceDown** – triggered when a service disappears from Prometheus targets.
+- **HighCPUUsage** – CPU usage above 80% for sustained periods.
+- **HighJVMMemoryUsage** – JVM heap usage exceeding safe thresholds.
 
 Alerts are forwarded to Alertmanager, which:
 
-  Groups related alerts
-  Prevents alert storms
-  Supports silencing and future notification integrations
+- Groups related alerts
+- Prevents alert storms
+- Supports silencing and future notification integrations
 
 Alerts were validated by intentionally scaling services to zero replicas and observing alert state transitions.
+
+Alerts include service and namespace labels, making correlation with dashboards straightforward.
+
+---
+
+## Operational Automation (Bash Scripts)
+
+Bash scripts are used to **improve operational usability**, without replacing Jenkins or Helm.
+
+Scripts provide:
+
+- Cluster and tool pre-flight validation
+- One-command monitoring stack deployment
+- Deployment rollout status checks
+- Centralized log access for services
+- Safe cleanup of non-production monitoring resources
+
+These scripts reduce repetitive manual commands and standardize common operational workflows.
 
 ---
 
@@ -250,7 +303,7 @@ Alerts were validated by intentionally scaling services to zero replicas and obs
 3. Jenkins pipeline triggers automatically
 4. Services are built, scanned, and deployed to Kubernetes
 
-  Detailed environment-specific setup steps are intentionally abstracted to keep the focus on CI/CD pipeline design and DevSecOps concepts.
+  Detailed environment-specific setup steps are intentionally abstracted to keep the focus on **CI/CD pipeline design and DevSecOps concepts**.
 
 ---
 
@@ -272,3 +325,5 @@ These constraints are intentional to keep the project focused and explainable.
 - Containerizing microservices using Docker
 - Managing Kubernetes deployments using Helm
 - Applying DevSecOps principles in real-world workflows
+- Building service-level observability using Prometheus and Grafana
+- Writing practical Bash automation for operations
