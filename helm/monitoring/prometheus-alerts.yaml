@@ -12,7 +12,7 @@ data:
           - alert: ServiceDown
             expr: |
               absent(up{job="kubernetes-services", service="user-service"})
-            for: 10s
+            for: 1m
             labels:
               severity: critical
             annotations:
