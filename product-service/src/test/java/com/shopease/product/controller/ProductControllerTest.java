@@ -33,7 +33,9 @@ class ProductControllerTest {
     @Test
     void listReturnsOk() throws Exception {
         when(repo.findAll()).thenReturn(Collections.emptyList());
-        mvc.perform(get("/api/products")).andExpect(status().isOk());
+        mvc.perform(get("/api/products")
+                .header("X-USER-ID", 123L))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -57,6 +59,7 @@ class ProductControllerTest {
         // you may need to mock repo.save if controller relies on it; but in WebMvcTest,
         // normally controller is tested in isolation
         mvc.perform(post("/api/products")
+                .header("X-USER-ID", 123L)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
