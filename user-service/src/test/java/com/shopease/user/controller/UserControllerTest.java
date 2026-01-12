@@ -6,6 +6,7 @@ import com.shopease.user.dto.UserResponse;
 import com.shopease.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
@@ -18,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(UserController.class)
+@AutoConfigureMockMvc
 class UserControllerTest {
 
     @Autowired
@@ -35,7 +37,8 @@ class UserControllerTest {
         req.setEmail("john@example.com");
         req.setPassword("Password1");
 
-        when(service.register(any())).thenReturn(new UserResponse(1L, "John", "john@example.com"));
+        when(service.register(any()))
+                .thenReturn(new UserResponse(1L, "John", "john@example.com"));
 
         mvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)

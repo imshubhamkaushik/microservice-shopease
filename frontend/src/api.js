@@ -9,7 +9,15 @@ const API_BASE = ""; //same origin
 const USER_API_BASE = `${API_BASE}/api/users`;
 const PRODUCT_API_BASE = `${API_BASE}/api/products`;
 
+let currentUserId = null;
+
 // --------USER APIs--------
+
+export const loginUser = async (credentials) => {
+  const res = await axios.post(`${USER_API_BASE}/login`, credentials);
+  currentUserId = res.data.id; // Store logged-in user ID
+  return res.data;
+};
 
 export const getUsers = async () => {
   const res = await axios.get(`${USER_API_BASE}`);
@@ -27,25 +35,45 @@ export const deleteUser = async (id) => {
   return res.data;
 };
 
-export const loginUser = async (credentials) => {
-  const res = await axios.post(`${USER_API_BASE}/login`, credentials);
-  return res.data;
-}
-
 // --------PRODUCT APIs--------
 
 export const getProducts = async () => {
-  const res = await axios.get(`${PRODUCT_API_BASE}`);
+
+  if (!currentUserId) {
+    throw new Error("User not logged in");
+  }
+
+  const res = await axios.get(PRODUCT_API_BASE, {
+    headers: {
+      'X-USER-ID': currentUserId,
+    },
+  });
   return res.data;
 };
 
 export const createProduct = async (product) => {
-  const res = await axios.post(`${PRODUCT_API_BASE}`, product);
+  if (!currentUserId) {
+    throw new Error("User not logged in");
+  }
+
+  const res = await axios.post(PRODUCT_API_BASE, product, {
+    headers: {
+      'X-USER-ID': currentUserId,
+    },
+  });
   return res.data;
 };
 
 export const deleteProduct = async (id) => {
-  const res = await axios.delete(`${PRODUCT_API_BASE}/${id}`);
+  if (!currentUserId) {
+    throw new Error("User not logged in");
+  }
+
+  const res = await axios.delete(`${PRODUCT_API_BASE}/${id}`, {
+    headers: {
+      'X-USER-ID': currentUserId,
+    },
+  });
   console.log("Deleted product response:", res.status, res.data);
   return res.data;
 };

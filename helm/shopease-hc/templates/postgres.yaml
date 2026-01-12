@@ -6,8 +6,8 @@ metadata:
   name: shopease-secrets
 type: Opaque
 stringData:
-  DB_USER: "{{ .Values.postgres.username | default "postgres" }}"
-  DB_PASSWORD: "{{ .Values.postgres.password | default "postgres" }}"
+  DB_USER: "{{ .Values.postgres.username }}"
+  DB_PASSWORD: "{{ .Values.postgres.password }}"
 ---
 apiVersion: apps/v1
 kind: StatefulSet # Use StatefulSet for stable database deployment

@@ -1,0 +1,161 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_ORG = "imshubhamkaushik"
+
+        IMAGE_TAG = "${BUILD_NUMBER}"
+
+        USER_SERVICE_IMAGE = "${DOCKER_ORG}/user-service:${IMAGE_TAG}"
+        PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:${IMAGE_TAG}"
+        FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:${IMAGE_TAG}"
+
+        HELM_CHART_DIR = "helm/shopease-hc"
+
+        SONARQUBE = "sonarqube"
+        DOCKER_CREDENTIALS = "dockerhub"
+        KUBERNETES_CREDENTIALS = "kubernetes-config"
+        DB_PASSWORD_CREDENTIAL_ID = "shopease-db-password"
+        K8S_NAMESPACE = "default"
+    }
+
+    stages {
+
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/imshubhamkaushik/microservice-shopease.git'
+            }
+        }
+
+        stage('Backend Unit & Integration Tests (Parallel)') {
+            parallel {
+
+                stage('User Service Tests + Coverage') {
+                    steps {
+                        dir('user-service') {
+                            sh 'mvn -B clean verify'
+                        }
+                    }
+                }
+
+                stage('Product Service Tests + Coverage') {
+                    steps {
+                        dir('product-service') {
+                            sh 'mvn -B clean verify'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('SonarQube Analysis + Quality Gate') {
+            parallel {
+
+                stage('User Service SonarQube') {
+                    steps {
+                        dir('user-service') {
+                            withSonarQubeEnv("${SONARQUBE}") {
+                                sh 'mvn sonar:sonar'
+                            }
+                        }
+                        timeout(time: 5, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
+                }
+
+                stage('Product Service SonarQube') {
+                    steps {
+                        dir('product-service') {
+                            withSonarQubeEnv("${SONARQUBE}") {
+                                sh 'mvn sonar:sonar'
+                            }
+                        }
+                        timeout(time: 5, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Frontend Build') {
+            steps {
+                dir('frontend') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                sh "docker build -t ${USER_SERVICE_IMAGE} ./user-service"
+                sh "docker build -t ${PRODUCT_SERVICE_IMAGE} ./product-service"
+                sh "docker build -t ${FRONTEND_SERVICE_IMAGE} ./frontend"
+            }
+        }
+
+        stage('Trivy Scan Docker Images') {
+            steps {
+                sh "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${USER_SERVICE_IMAGE}"
+                sh "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${PRODUCT_SERVICE_IMAGE}"
+                sh "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${FRONTEND_SERVICE_IMAGE}"
+            }
+        }
+
+        stage('Push Docker Images to Registry') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "${DOCKER_CREDENTIALS}",
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
+                    sh "docker push ${USER_SERVICE_IMAGE}"
+                    sh "docker push ${PRODUCT_SERVICE_IMAGE}"
+                    sh "docker push ${FRONTEND_SERVICE_IMAGE}"
+                }
+            }
+        }
+
+        stage('Create / Update K8s Secret') {
+            steps {
+                withCredentials([
+                    string(credentialsId: "${DB_PASSWORD_CREDENTIAL_ID}", variable: 'DB_PASSWORD')
+                ]) {
+                    withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
+                        sh '''
+                        kubectl create secret generic shopease-secrets \
+                          --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+                          --from-literal=DB_USER=postgres \
+                          --dry-run=client -o yaml | kubectl apply -f -
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Trivy Scan Helm Manifests') {
+            steps {
+                sh "trivy config --severity HIGH,CRITICAL --exit-code 1 ${HELM_CHART_DIR}"
+            }
+        }
+
+        stage('Deploy to Kubernetes Using Helm') {
+            steps {
+                withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
+                    sh "helm upgrade --install shopease ${HELM_CHART_DIR} --namespace ${K8S_NAMESPACE} --create-namespace"
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo 'Pipeline successful' }
+        failure { echo 'Pipeline failed – check logs' }
+    }
+}

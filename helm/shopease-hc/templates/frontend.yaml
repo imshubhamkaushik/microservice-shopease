@@ -14,6 +14,8 @@ spec:
       labels:
         app: frontend
     spec:
+      serviceAccountName: shopease-sa
+      automountServiceAccountToken: false
       containers:
         - name: frontend
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.frontendService.image.repository }}:{{ .Values.frontendService.image.tag }}"

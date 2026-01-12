@@ -4,9 +4,12 @@ pipeline {
     environment {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_ORG = "imshubhamkaushik" // your dockerhub username
-        USER_SERVICE_IMAGE = "${DOCKER_ORG}/user-service:latest"
-        PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:latest"
-        FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:latest"
+        
+        IMAGE_TAG = "${BUILD_NUMBER}" // You can customize the image tag as per your requirement
+        
+        USER_SERVICE_IMAGE = "${DOCKER_ORG}/user-service:${IMAGE_TAG}"
+        PRODUCT_SERVICE_IMAGE = "${DOCKER_ORG}/product-service:${IMAGE_TAG}"
+        FRONTEND_SERVICE_IMAGE = "${DOCKER_ORG}/frontend-service:${IMAGE_TAG}"
         
         HELM_CHART_DIR = "helm/shopease-hc" // Directory for Helm chart, can use different directory
         
@@ -27,56 +30,61 @@ pipeline {
             }
         }
 
-        // Unit Tests for Backend Services (parallel execution)
-        stage('Unit Tests for Backend Services') {
+        // Unit and Integration Tests for Backend Services (parallel execution)
+        stage('Unit and Integration Tests for Backend Services') {
             parallel {
-                userService: {
-                    stage('"User Service" Unit Tests') {
-                        steps {
-                            dir('user-service') {
-                                bat 'mvn -B test -DskipTests=false '
-                            }
+                stage('User Service Tests + Coverage') {
+                    steps {
+                        dir('user-service') {
+                            bat 'mvn -B clean verify'
                         }
                     }
                 }
-                productService: {
-                    stage('"Product Service" Unit Tests') {
-                        steps {
-                            dir('product-service') {
-                                bat 'mvn -B test -DskipTests=false '
-                            }
+
+                stage('Product Service Tests + Coverage') {
+                    steps {
+                        dir('product-service') {
+                            bat 'mvn -B clean verify'
                         }
                     }
                 }
             }
         }
 
-        // User Service Backend Build, SonarQube Analysis, and Quality Gate
-        stage('Build "User Service", SonarQube Analysis and Quality Gate') {
-            steps {
-                dir('user-service') {
-                    bat 'mvn -B -DskipTests clean package'
-                    withSonarQubeEnv("$SONARQUBE") {
-                        bat 'mvn sonar:sonar'
-                    }   
-                }
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        // Backend Build, SonarQube Analysis, and Quality Gate
+        stage('Backend Build, SonarQube analysis and Quality Gate') {
+            parallel {
 
-        // Product Service Backend Build, SonarQube Analysis, and Quality Gate
-        stage('Build "Product Service" and SonarQube Analysis') {
-            steps {
-                dir('product-service') {
-                    bat 'mvn -B -DskipTests clean package'
-                    withSonarQubeEnv("$SONARQUBE") {
-                        bat 'mvn sonar:sonar'
+                // Build and SonarQube for User Service
+                stage('User Service') {
+                    steps {
+                        dir('user-service') {
+                            bat 'mvn -B -DskipTests clean package'
+                            withSonarQubeEnv("$SONARQUBE") {
+                                bat 'mvn sonar:sonar'
+                            }
+                        }
+
+                        timeout(time: 5, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
                     }
                 }
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+
+                // Build and SonarQube for Product Service
+                stage('Product Service') {
+                    steps {
+                        dir('product-service') {
+                            bat 'mvn -B -DskipTests clean package'
+                            withSonarQubeEnv("$SONARQUBE") {
+                                bat 'mvn sonar:sonar'
+                            }
+                        }
+
+                        timeout(time: 5, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
                 }
             }
         }
@@ -112,7 +120,13 @@ pipeline {
         // Push Docker Images to Registry
         stage('Push Docker Images to Registry') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "${DOCKER_CREDENTIALS}", 
+                        usernameVariable: 'DOCKER_USERNAME', 
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
                     bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
                     bat "docker push ${USER_SERVICE_IMAGE}"
                     bat "docker push ${PRODUCT_SERVICE_IMAGE}"
@@ -122,19 +136,26 @@ pipeline {
         }
 
         //Create K8s secret from Jenkins credential
-        stage('Create K8s Secret for DB Password') {
+        stage('Create/Update K8s Secret for DB Password') {
             steps {
-                withCredentials([string(credentialsId: "${DB_PASSWORD_CREDENTIAL_ID}", variable: 'DB_PASSWORD')]) {
+                withCredentials([
+                    string(credentialsId: "${DB_PASSWORD_CREDENTIAL_ID}", variable: 'DB_PASSWORD')
+                ]) {
                     withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
                         // Use kubectl to create/update secret in the specified namespace
-                        bat "kubectl create secret generic shopease-secrets --from-literal=DB_PASSWORD=%DB_PASSWORD% --from-literal=DB_USER=postgres --dry-run=client -o yaml | kubectl apply -f -"
+                        bat '''
+                        kubectl create secret generic shopease-secrets \
+                            --from-literal=DB_PASSWORD=%DB_PASSWORD% \
+                            --from-literal=DB_USER=postgres \
+                            --dry-run=client -o yaml | kubectl apply -f -
+                        '''
                     }
                 }
             }
         }
 
-        // Trivy Scan Helm/Kubernetes Manifests
-        stage('Trivy Scan Helm/Kubernetes Manifests') {
+        // Trivy Scan Helm Manifests
+        stage('Trivy Scan Helm Manifests') {
             steps {
                 // Scan Helm templates for misconfigurations
                 bat "trivy config --severity HIGH,CRITICAL --exit-code 1 ${HELM_CHART_DIR}"
@@ -145,7 +166,7 @@ pipeline {
         stage('Deploy to Kubernetes Using Helm') {
             steps {
                 withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
-                    bat "helm upgrade --install shopease ${HELM_CHART_DIR}"
+                    bat "helm upgrade --install shopease ${HELM_CHART_DIR} --namespace ${K8S_NAMESPACE} --create-namespace"
                 }
             }
         }

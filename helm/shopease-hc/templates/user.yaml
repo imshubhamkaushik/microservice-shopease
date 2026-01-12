@@ -14,6 +14,7 @@ spec:
       labels:
         app: user-service
     spec:
+      serviceAccountName: shopease-sa
       automountServiceAccountToken: false
       initContainers:
         - name: wait-for-postgres

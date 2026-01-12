@@ -26,7 +26,7 @@ The project intentionally focuses on **pipeline design, security integration, de
 
 This project focuses on CI/CD and DevSecOps practices for containerized applications, complementing infrastructure-focused DevOps projects.
 
-Key emphasis areas:
+Key focus areas include:
 
 - Secure CI/CD pipeline design using Jenkins
 - Shift-left security using automated scanning
@@ -41,7 +41,7 @@ Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of s
 ## Tech Stack
 
 - **CI/CD**: Jenkins
-- **Containers**: Docker
+- **Containerization**: Docker
 - **Orchestration**: Kubernetes
 - **Package Management**: Helm
 - **Security & Quality**: SonarQube, Trivy
@@ -119,6 +119,7 @@ microservice-shopease/
 │       └── values.yaml
 |       └── Chart.yaml
 |   └── monitoring/
+|       └── Dashboards/
 |       └── README.md
 |       └── values.yaml
 |       └── monitoring/(Kept this folder for manual deployment of Prometheus, Grafana, Alertmanager without Helm)
@@ -192,6 +193,38 @@ Security is treated as a **first-class citizen** throughout the CI/CD lifecycle.
 
 ---
 
+## Testing & Quality Assurance
+
+### Testing Strategy
+
+- Unit Tests
+  - Validate core service logic using JUnit and Mockito
+- Controller Tests
+  - Web-layer behavior tested using Spring @WebMvcTest
+  - Security filters disabled to isolate controller logic
+- Integration Tests
+  - Database interactions tested using Testcontainers with PostgreSQL
+
+### CI Integration
+
+- Tests run automatically via:
+
+```nginx
+mvn clean verify
+```
+
+- Integration tests execute as part of the Maven lifecycle
+- Test failures immediately fail the pipeline
+
+### Code Coverage
+
+- JaCoCo generates coverage reports for visibility
+- 0Coverage reports are reviewed but strict percentage gates are intentionally not enforced
+
+This avoids artificial test inflation and keeps the focus on meaningful testing and CI stability.
+
+---
+
 ## Monitoring & Alerting
 
 This project implements production-style monitoring and alerting for Kubernetes-based microservices using Prometheus, Grafana, and Alertmanager.
@@ -220,7 +253,7 @@ prometheus.io/port: "8081" / "8082"
 - Microservices expose metrics via Spring Boot Actuator (``/actuator/prometheus``)
 - Prometheus discovers targets automatically using Kubenetes-native mechanisms
 
-- Collected metrics include:
+Collected metrics include:
 
   - Service availability (up)
   - HTTP request rate and error rate
