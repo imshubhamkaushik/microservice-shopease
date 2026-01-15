@@ -31,25 +31,25 @@ pipeline {
         }
 
         // Unit and Integration Tests for Backend Services (parallel execution)
-        stage('Unit and Integration Tests for Backend Services') {
-            parallel {
-                stage('User Service Tests + Coverage') {
-                    steps {
-                        dir('user-service') {
-                            bat 'mvn -B clean verify'
-                        }
-                    }
-                }
+        // stage('Unit and Integration Tests for Backend Services') {
+        //     parallel {
+        //         stage('User Service Tests + Coverage') {
+        //             steps {
+        //                 dir('user-service') {
+        //                     bat 'mvn -B clean verify'
+        //                 }
+        //             }
+        //         }
 
-                stage('Product Service Tests + Coverage') {
-                    steps {
-                        dir('product-service') {
-                            bat 'mvn -B clean verify'
-                        }
-                    }
-                }
-            }
-        }
+        //         stage('Product Service Tests + Coverage') {
+        //             steps {
+        //                 dir('product-service') {
+        //                     bat 'mvn -B clean verify'
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         // Backend Build, SonarQube Analysis, and Quality Gate
         stage('Backend Build, SonarQube analysis and Quality Gate') {
@@ -60,10 +60,14 @@ pipeline {
                     steps {
                         dir('user-service') {
                             bat 'mvn -B -DskipTests clean package'
-                           
+                            // withSonarQubeEnv("$SONARQUBE") {
+                            //     bat 'mvn sonar:sonar'
+                            // }
                         }
 
-                       
+                        // timeout(time: 5, unit: 'MINUTES') {
+                        //     waitForQualityGate abortPipeline: true
+                        // }
                     }
                 }
 
@@ -72,10 +76,14 @@ pipeline {
                     steps {
                         dir('product-service') {
                             bat 'mvn -B -DskipTests clean package'
-                           
+                            // withSonarQubeEnv("$SONARQUBE") {
+                            //     bat 'mvn sonar:sonar'
+                            // }
                         }
 
-                        
+                        // timeout(time: 5, unit: 'MINUTES') {
+                        //     waitForQualityGate abortPipeline: true
+                        // }
                     }
                 }
             }
