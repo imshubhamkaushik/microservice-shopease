@@ -154,23 +154,21 @@ pipeline {
         }
 
         // Push Docker Images to Registry
-        stage('Push Docker Images to Registry') {
-            stage ('Push Docker Images (Parallel)') {
-                parallel {
-                    stage ("User Service Image") {
-                        steps {
-                            bat "docker push ${USER_SERVICE_IMAGE}"
-                        }
+        stage ('Push Docker Images (Parallel)') {
+            parallel {
+                stage ("User Service Image") {
+                    steps {
+                        bat "docker push ${USER_SERVICE_IMAGE}"
                     }
-                    stage ("Product Service Image") {
-                        steps {
-                            bat "docker push ${PRODUCT_SERVICE_IMAGE}"
-                        }
+                }
+                stage ("Product Service Image") {
+                    steps {
+                        bat "docker push ${PRODUCT_SERVICE_IMAGE}"
                     }
-                    stage ("Frontend Service Image") {
-                        steps {
-                            bat "docker push ${FRONTEND_SERVICE_IMAGE}"
-                        }
+                }
+                stage ("Frontend Service Image") {
+                    steps {
+                        bat "docker push ${FRONTEND_SERVICE_IMAGE}"
                     }
                 }
             }
