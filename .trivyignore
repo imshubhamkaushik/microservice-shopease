@@ -5,3 +5,7 @@
 # RUSTSEC-2020-0071
 #
 # Populate this list after reviewing Trivy reports during CI.
+
+# Postgres StatefulSet requires write access to filesystem
+# Enforcing readOnlyRootFilesystem breaks WAL & init
+AVD-KSV-0014
