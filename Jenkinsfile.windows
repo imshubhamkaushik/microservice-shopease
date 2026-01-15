@@ -23,13 +23,6 @@ pipeline {
 
     stages {
 
-        // Checkout Source Code
-        stage('Git Checkout') { 
-            steps {
-                git branch: 'main', url: 'https://github.com/imshubhamkaushik/microservice-shopease.git'
-            }
-        }
-
         // Unit and Integration Tests for Backend Services (parallel execution)
         // stage('Unit and Integration Tests for Backend Services') {
         //     parallel {
