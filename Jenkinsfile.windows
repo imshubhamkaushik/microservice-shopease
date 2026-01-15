@@ -157,7 +157,7 @@ pipeline {
                 ]) {
                     bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
 
-                    parallel (
+                    parallel {
                         stage ("Push User Image") {
                             steps {
                                 bat "docker push ${USER_SERVICE_IMAGE}"
@@ -173,7 +173,7 @@ pipeline {
                                 bat "docker push ${FRONTEND_SERVICE_IMAGE}"
                             }
                         }
-                    )
+                    }
                 }
             }
         }
