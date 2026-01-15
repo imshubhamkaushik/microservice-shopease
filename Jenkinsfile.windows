@@ -141,14 +141,13 @@ pipeline {
                 withCredentials([
                     string(credentialsId: "${DB_PASSWORD_CREDENTIAL_ID}", variable: 'DB_PASSWORD')
                 ]) {
-                        // Use kubectl to create/update secret in the specified namespace
-                        bat '''
-                        kubectl create secret generic shopease-secrets \
-                            --from-literal=DB_PASSWORD=%DB_PASSWORD% \
-                            --from-literal=DB_USER=postgres \
-                            --dry-run=client -o yaml | kubectl apply -f -
-                        '''
-                    }
+                    // Use kubectl to create/update secret in the specified namespace
+                    bat '''
+                    kubectl create secret generic shopease-secrets \
+                        --from-literal=DB_PASSWORD=%DB_PASSWORD% \
+                        --from-literal=DB_USER=postgres \
+                        --dry-run=client -o yaml | kubectl apply -f -
+                    '''
                 }
             }
         }
