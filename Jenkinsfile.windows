@@ -52,11 +52,11 @@ pipeline {
         // }
 
         // Backend Build, SonarQube Analysis, and Quality Gate
-        stage('Backend Build, SonarQube analysis and Quality Gate') {
+        stage('Build Services (Parallel)') {
             parallel {
 
                 // Build and SonarQube for User Service
-                stage('User Service') {
+                stage('User Service - Build, SonarQube Analysis, and Quality Gate') {
                     steps {
                         dir('user-service') {
                             bat 'mvn -B -DskipTests clean package'
@@ -72,7 +72,7 @@ pipeline {
                 }
 
                 // Build and SonarQube for Product Service
-                stage('Product Service') {
+                stage('Product Service - Build, SonarQube Analysis, and Quality Gate') {
                     steps {
                         dir('product-service') {
                             bat 'mvn -B -DskipTests clean package'
@@ -86,34 +86,62 @@ pipeline {
                         // }
                     }
                 }
-            }
-        }
 
-        // Frontend Service Build
-        stage('Build "Frontend Service"') {
-            steps {
-                dir('frontend') {
-                    bat 'npm install'
-                    bat 'npm run build'
+                // Frontend Service Build
+                stage('Build "Frontend Service"') {
+                    steps {
+                        dir('frontend') {
+                            bat 'npm install'
+                            bat 'npm run build'
+                        }
+                    }
                 }
             }
         }
 
         // Docker Image Build for All Services
-        stage ('Build Docker Images for All Services') {
-            steps {
-                bat "docker build -t ${USER_SERVICE_IMAGE} ./user-service"
-                bat "docker build -t ${PRODUCT_SERVICE_IMAGE} ./product-service"
-                bat "docker build -t ${FRONTEND_SERVICE_IMAGE} ./frontend"
+        stage ('Build Docker Images for All Services (Parallel)') {
+            parallel {
+                stage('Build "User Service" Docker Image') {
+                    steps {
+                        bat "docker build -t ${USER_SERVICE_IMAGE} ./user-service"
+                    }
+                }
+
+                stage('Build "Product Service" Docker Image') {
+                    steps {
+                        bat "docker build -t ${PRODUCT_SERVICE_IMAGE} ./product-service"
+                    }
+                }
+
+                stage('Build "Frontend Service" Docker Image') {
+                    steps {
+                        bat "docker build -t ${FRONTEND_SERVICE_IMAGE} ./frontend"
+                    }
+                }
             }
         }
         
         // Trivy Scan Docker Images
         stage('Trivy Scan Docker Images') {
-            steps {
-                bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${USER_SERVICE_IMAGE}"
-                bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${PRODUCT_SERVICE_IMAGE}"
-                bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${FRONTEND_SERVICE_IMAGE}"
+            parallel {
+                stage('Scan User Image') {
+                    steps {
+                        bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${USER_SERVICE_IMAGE}"
+                    }
+                }
+
+                stage('Scan Product Image') {
+                    steps {
+                        bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${PRODUCT_SERVICE_IMAGE}"
+                    }
+                }
+
+                stage('Scan Frontend Image') {
+                    steps {
+                        bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${FRONTEND_SERVICE_IMAGE}"
+                    }
+                }
             }
         }
 
@@ -128,9 +156,18 @@ pipeline {
                     )
                 ]) {
                     bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
-                    bat "docker push ${USER_SERVICE_IMAGE}"
-                    bat "docker push ${PRODUCT_SERVICE_IMAGE}"
-                    bat "docker push ${FRONTEND_SERVICE_IMAGE}"
+
+                    parallel (
+                        "Push User Image": {
+                            bat "docker push ${USER_SERVICE_IMAGE}"
+                        },
+                        "Push Product Image": {
+                            bat "docker push ${PRODUCT_SERVICE_IMAGE}"
+                        },
+                        "Push Frontend Image": {
+                            bat "docker push ${FRONTEND_SERVICE_IMAGE}"
+                        }
+                    )
                 }
             }
         }
