@@ -156,23 +156,23 @@ pipeline {
                     )
                 ]) {
                     bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
+                }
+            }
 
-                    parallel {
-                        stage ("Push User Image") {
-                            steps {
-                                bat "docker push ${USER_SERVICE_IMAGE}"
-                            }
-                        },
-                        stage ("Push Product Image") {
-                            steps {
-                                bat "docker push ${PRODUCT_SERVICE_IMAGE}"
-                            }
-                        },
-                        stage ("Push Frontend Image") {
-                            steps {
-                                bat "docker push ${FRONTEND_SERVICE_IMAGE}"
-                            }
-                        }
+            parallel {
+                stage ("Push User Image") {
+                    steps {
+                        bat "docker push ${USER_SERVICE_IMAGE}"
+                    }
+                },
+                stage ("Push Product Image") {
+                    steps {
+                        bat "docker push ${PRODUCT_SERVICE_IMAGE}"
+                    }
+                },
+                stage ("Push Frontend Image") {
+                    steps {
+                        bat "docker push ${FRONTEND_SERVICE_IMAGE}"
                     }
                 }
             }
