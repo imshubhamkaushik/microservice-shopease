@@ -141,7 +141,6 @@ pipeline {
                 withCredentials([
                     string(credentialsId: "${DB_PASSWORD_CREDENTIAL_ID}", variable: 'DB_PASSWORD')
                 ]) {
-                    withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
                         // Use kubectl to create/update secret in the specified namespace
                         bat '''
                         kubectl create secret generic shopease-secrets \
@@ -165,11 +164,9 @@ pipeline {
         // Deploy to Kubernetes Using Helm
         stage('Deploy to Kubernetes Using Helm') {
             steps {
-                withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
-                    bat "helm upgrade --install shopease ${HELM_CHART_DIR} --namespace ${K8S_NAMESPACE} --create-namespace"
-                }
+                bat "helm upgrade --install shopease ${HELM_CHART_DIR} --namespace ${K8S_NAMESPACE} --create-namespace"
             }
-        }
+        } 
     }
 
     // Post Actions
