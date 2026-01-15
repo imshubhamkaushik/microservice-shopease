@@ -16,6 +16,8 @@ spec:
     spec:
       serviceAccountName: shopease-sa
       automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: frontend
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.frontendService.image.repository }}:{{ .Values.frontendService.image.tag }}"
@@ -23,6 +25,14 @@ spec:
             - name: http
               containerPort: {{ .Values.frontendService.service.port | default 80 }}
           resources: {{- toYaml .Values.frontendService.resources | nindent 12 }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           readinessProbe:
             httpGet:
               path: /

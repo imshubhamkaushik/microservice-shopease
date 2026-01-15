@@ -1,13 +1,4 @@
-# 1. Persistent Volume Claim Template
-#    This replaces the 'volumes' section in your Deployment
-apiVersion: v1
-kind: Secret
-metadata:
-  name: shopease-secrets
-type: Opaque
-stringData:
-  DB_USER: "{{ .Values.postgres.username }}"
-  DB_PASSWORD: "{{ .Values.postgres.password }}"
+# Persistent Volume Claim Template - This replaces the 'volumes' section in your Deployment
 ---
 apiVersion: apps/v1
 kind: StatefulSet # Use StatefulSet for stable database deployment
@@ -26,25 +17,34 @@ spec:
       labels:
         app: postgres
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: postgres
           # NOTE: Helm templating is preserved
           image: "{{ .Values.postgres.image }}:{{ .Values.postgres.tag }}"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: {{ .Values.postgres.port | default 5432 }}
               name: pg
           env:
-            - name: DB_USER
+            - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: shopease-secrets
                   key: DB_USER
-            - name: DB_PASSWORD
+            - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: shopease-secrets
                   key: DB_PASSWORD
-            - name: DB_NAME
+            - name: POSTGRES_DB
               value: "{{ .Values.postgres.db | default "shopease" }}"
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
@@ -53,7 +53,7 @@ spec:
               command:
                 - sh
                 - -c
-                - pg_isready -U $(printenv DB_USER)
+                - pg_isready -U $(printenv POSTGRES_USER)
             initialDelaySeconds: 5
             periodSeconds: 10
           volumeMounts:
@@ -73,7 +73,7 @@ spec:
             storage: {{ .Values.postgres.storage.size | default "5Gi" }} # Change this to your required disk size
         # NOTE: For Minikube, this uses the default StorageClass
 ---
-# 2. Service Definition (Remains the same for DNS)
+# Service Definition (Remains the same for DNS)
 apiVersion: v1
 kind: Service
 metadata:

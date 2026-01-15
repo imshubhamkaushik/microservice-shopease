@@ -16,10 +16,19 @@ spec:
     spec:
       serviceAccountName: shopease-sa
       automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
       initContainers:
         - name: wait-for-postgres
           image: postgres:16-alpine
           imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: PGPASSWORD
               valueFrom:
@@ -40,6 +49,14 @@ spec:
         - name: product-service
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.productService.image.repository }}:{{ .Values.productService.image.tag }}"
           imagePullPolicy: {{ .Values.productService.image.pullPolicy | default "IfNotPresent" }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: {{ .Values.productService.service.port | default 8082 }}
           env:
