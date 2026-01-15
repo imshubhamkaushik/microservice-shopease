@@ -147,32 +147,33 @@ pipeline {
 
         // Push Docker Images to Registry
         stage('Push Docker Images to Registry') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: "${DOCKER_CREDENTIALS}", 
-                        usernameVariable: 'DOCKER_USERNAME', 
-                        passwordVariable: 'DOCKER_PASSWORD'
-                    )
-                ]) {
-                    bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
-                }
-            }
+            stages {
 
-            parallel {
-                stage ("Push User Image") {
+                stage('Docker Login') {
                     steps {
-                        bat "docker push ${USER_SERVICE_IMAGE}"
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                            bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
+                        }
                     }
                 }
-                stage ("Push Product Image") {
-                    steps {
-                        bat "docker push ${PRODUCT_SERVICE_IMAGE}"
-                    }
-                }
-                stage ("Push Frontend Image") {
-                    steps {
-                        bat "docker push ${FRONTEND_SERVICE_IMAGE}"
+            
+                stage ('Push Docker Images (Parallel)') {
+                    parallel {
+                        stage ("User Service Image") {
+                            steps {
+                                bat "docker push ${USER_SERVICE_IMAGE}"
+                            }
+                        }
+                        stage ("Product Service Image") {
+                            steps {
+                                bat "docker push ${PRODUCT_SERVICE_IMAGE}"
+                            }
+                        }
+                        stage ("Frontend Service Image") {
+                            steps {
+                                bat "docker push ${FRONTEND_SERVICE_IMAGE}"
+                            }
+                        }
                     }
                 }
             }
