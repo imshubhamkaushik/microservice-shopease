@@ -147,7 +147,6 @@ pipeline {
             }
         }
 
-
         //Create K8s secret from Jenkins credential
         stage('Create/Update K8s Secret for DB Password') {
             steps {
@@ -171,7 +170,7 @@ pipeline {
         stage('Trivy Scan Helm Manifests') {
             steps {
                 // Scan Helm templates for misconfigurations
-                bat "trivy config --severity HIGH,CRITICAL --exit-code 1 ${HELM_CHART_DIR}"
+                bat "trivy config --severity HIGH,CRITICAL --exit-code 1 --format table ${HELM_CHART_DIR}"
             }
         }
         
