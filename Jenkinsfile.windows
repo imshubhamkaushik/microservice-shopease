@@ -158,13 +158,13 @@ pipeline {
                     bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
 
                     parallel (
-                        "Push User Image": {
+                        stage ("Push User Image") {
                             bat "docker push ${USER_SERVICE_IMAGE}"
                         },
-                        "Push Product Image": {
+                        stage ("Push Product Image") {
                             bat "docker push ${PRODUCT_SERVICE_IMAGE}"
                         },
-                        "Push Frontend Image": {
+                        stage ("Push Frontend Image") {
                             bat "docker push ${FRONTEND_SERVICE_IMAGE}"
                         }
                     )
