@@ -159,13 +159,19 @@ pipeline {
 
                     parallel (
                         stage ("Push User Image") {
-                            bat "docker push ${USER_SERVICE_IMAGE}"
+                            steps {
+                                bat "docker push ${USER_SERVICE_IMAGE}"
+                            }
                         },
                         stage ("Push Product Image") {
-                            bat "docker push ${PRODUCT_SERVICE_IMAGE}"
+                            steps {
+                                bat "docker push ${PRODUCT_SERVICE_IMAGE}"
+                            }
                         },
                         stage ("Push Frontend Image") {
-                            bat "docker push ${FRONTEND_SERVICE_IMAGE}"
+                            steps {
+                                bat "docker push ${FRONTEND_SERVICE_IMAGE}"
+                            }
                         }
                     )
                 }
