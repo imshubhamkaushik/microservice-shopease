@@ -135,6 +135,19 @@ pipeline {
             }
         }
 
+        stage('Debug Kubeconfig') {
+            steps {
+                withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
+                    bat '''
+                    kubectl config view
+                    kubectl cluster-info
+                    kubectl get nodes
+                    '''
+                }
+            }
+        }
+
+
         //Create K8s secret from Jenkins credential
         stage('Create/Update K8s Secret for DB Password') {
             steps {
