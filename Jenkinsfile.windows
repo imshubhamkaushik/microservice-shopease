@@ -23,7 +23,7 @@ pipeline {
 
     stages {
 
-        Unit and Integration Tests for Backend Services (parallel execution)
+        // Unit and Integration Tests for Backend Services (parallel execution)
         stage('Unit and Integration Tests for Backend Services') {
             parallel {
                 stage('User Service Tests + Coverage') {
