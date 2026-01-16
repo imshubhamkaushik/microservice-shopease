@@ -53,14 +53,14 @@ pipeline {
                     steps {
                         dir('user-service') {
                             bat 'mvn -B -DskipTests clean package'
-                            // withSonarQubeEnv("$SONARQUBE") {
-                            //     bat 'mvn sonar:sonar'
-                            // }
+                            withSonarQubeEnv("$SONARQUBE") {
+                                bat 'mvn sonar:sonar'
+                            }
                         }
 
-                        // timeout(time: 5, unit: 'MINUTES') {
-                        //     waitForQualityGate abortPipeline: true
-                        // }
+                        timeout(time: 5, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
                     }
                 }
 
@@ -69,14 +69,14 @@ pipeline {
                     steps {
                         dir('product-service') {
                             bat 'mvn -B -DskipTests clean package'
-                            // withSonarQubeEnv("$SONARQUBE") {
-                            //     bat 'mvn sonar:sonar'
-                            // }
+                            withSonarQubeEnv("$SONARQUBE") {
+                                bat 'mvn sonar:sonar'
+                            }
                         }
 
-                        // timeout(time: 5, unit: 'MINUTES') {
-                        //     waitForQualityGate abortPipeline: true
-                        // }
+                        timeout(time: 5, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
                     }
                 }
 
