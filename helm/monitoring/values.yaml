@@ -1,7 +1,5 @@
 # kube-prometheus-stack values
 # Aligned with previous manual Prometheus/Grafana setup
-# Beginner–Intermediate, resume-safe
-
 
 # Prometheus
 prometheus:
@@ -66,7 +64,10 @@ additionalPrometheusRules:
       - name: service-availability
         rules:
           - alert: ServiceDown
-            expr: max by (service, namespace) (up) == 0 # absent(up{job="kubernetes-service-endpoints"}) if up == 0 doesnt work
+            expr: |
+              sum by (namespace, service) (
+                up{job="kubernetes-service-endpoints"}
+              ) == 0
             for: 1m
             labels:
               severity: critical
@@ -77,7 +78,10 @@ additionalPrometheusRules:
       - name: cpu-alerts
         rules:
           - alert: HighCPUUsage
-            expr: process_cpu_usage > 0.80
+            expr: |
+              sum by (pod, namespace)(
+                rate(container_cpu_usage_seconds_total{container!="",image!=""}[1m])
+              ) > 0.8
             for: 1m
             labels:
               severity: warning

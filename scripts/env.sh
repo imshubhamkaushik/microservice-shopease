@@ -2,6 +2,7 @@
 # Centralized environment variables for operational scripts
 
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Fail if this file is sourced incorrectly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

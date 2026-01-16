@@ -18,7 +18,7 @@ kubectl get svc -n $MONITORING_NAMESPACE
 
 echo
 echo "Alertmanager Status: "
-kubectl get pods -n $MONITORING_NAMESPACE | grep alertmanager || echo "No Alertmanager pods found."
+kubectl get pods -n $MONITORING_NAMESPACE -l app.kubernetes.io/name=alertmanager || echo "No Alertmanager pods found."
 
 echo
 echo "How To access:"
@@ -33,6 +33,3 @@ echo "Grafana: "
 echo "kubectl port-forward -n $MONITORING_NAMESPACE svc/monitoring-grafana 3000:80"
 echo "Port forwarding established for Grafana."
 echo "We can access Grafana UI at http://localhost:3000 (default credentials: admin/admin)"
-
-echo
-echo "This script provides visibility and access guidance"

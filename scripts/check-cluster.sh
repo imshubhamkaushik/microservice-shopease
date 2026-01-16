@@ -30,7 +30,7 @@ for ns in "${APP_NAMESPACE}" "${MONITORING_NAMESPACE}"; do
   if kubectl get namespace "${ns}" >/dev/null 2>&1; then
     echo "Namespace '${ns}' exists"
   else
-    echo "Namespace '${ns}' does not exist"
+    echo "Namespace '${ns}' does not exist (will be created if required)"
   fi
 done
 
