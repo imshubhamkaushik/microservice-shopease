@@ -23,26 +23,26 @@ pipeline {
 
     stages {
 
-        // Unit and Integration Tests for Backend Services (parallel execution)
-        // stage('Unit and Integration Tests for Backend Services') {
-        //     parallel {
-        //         stage('User Service Tests + Coverage') {
-        //             steps {
-        //                 dir('user-service') {
-        //                     bat 'mvn -B clean verify'
-        //                 }
-        //             }
-        //         }
+        Unit and Integration Tests for Backend Services (parallel execution)
+        stage('Unit and Integration Tests for Backend Services') {
+            parallel {
+                stage('User Service Tests + Coverage') {
+                    steps {
+                        dir('user-service') {
+                            bat 'mvn -B clean verify'
+                        }
+                    }
+                }
 
-        //         stage('Product Service Tests + Coverage') {
-        //             steps {
-        //                 dir('product-service') {
-        //                     bat 'mvn -B clean verify'
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+                stage('Product Service Tests + Coverage') {
+                    steps {
+                        dir('product-service') {
+                            bat 'mvn -B clean verify'
+                        }
+                    }
+                }
+            }
+        }
 
         // Backend Build, SonarQube Analysis, and Quality Gate
         stage('Build Services (Parallel)') {
