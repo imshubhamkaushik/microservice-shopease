@@ -265,6 +265,27 @@ pipeline {
             }
         }
 
+        // Verify Monitoring Stack
+        stage('Verify Monitoring Stack') {
+            steps {
+                bat '''
+                echo =========================================
+                echo Verifying Monitoring Stack
+                echo =========================================
+
+                kubectl get ns monitoring >nul 2>&1
+                IF %ERRORLEVEL% NEQ 0 (
+                    echo INFO: Monitoring namespace not found.
+                    echo INFO: Monitoring is expected to be deployed separately.
+                    exit /b 0
+                )
+
+                echo Monitoring namespace found. Checking core components...
+                kubectl -n monitoring get pods
+                '''
+            }
+        }
+
         //Create K8s secret from Jenkins credential
         stage('Create/Update K8s Secret for DB Password') {
             steps {
@@ -294,6 +315,19 @@ pipeline {
         stage('Deploy to Kubernetes Using Helm') {
             steps {
                 bat "helm upgrade --install shopease ${HELM_CHART_DIR} --namespace ${K8S_NAMESPACE} --create-namespace"
+            }
+        }
+
+        // Post-Deploy Observability Info
+        stage('Post-Deploy Observability Info') {
+            steps {
+                bat '''
+                echo =========================================
+                echo Observability Context (Post-Deploy)
+                echo =========================================
+
+                kubectl get svc -n monitoring
+                '''
             }
         }
     }
