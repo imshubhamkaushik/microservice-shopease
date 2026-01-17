@@ -179,31 +179,73 @@ pipeline {
                 }
             }
         }
+        /*
+        * WINDOWS + JENKINS + MINIKUBE NOTE
+        *
+        * Jenkins runs as a Windows service and uses its own user profile.
+        * Kubernetes access requires a kubeconfig at:
+        *   %USERPROFILE%\.kube\config
+        *
+        * If this stage fails with:
+        *   "Please enter Username: error: EOF"
+        *
+        * Ensure kubeconfig exists for the Jenkins service account, e.g.:
+        *   C:\Windows\System32\config\systemprofile\.kube\config
+        */
 
         // Kubernetes Cluster Preparation
         stage('Prepare Kubernetes Cluster') {
             steps {
                 script {
                     if (CLUSTER_TYPE == "minikube") {
-                        /* MINIKUBE MODE
+                        /* MINIKUBE MODE - WITH BOUNDED WAIT
                          * - Local, ephemeral cluster
                          * - API server port changes on restart
                          * - kubeconfig must be refreshed at runtime
+                         * - Jenkins does NOT start Minikube.
+                         * - It waits for Minikube to become available (up to a max timeout),
+                         * - refreshes kubeconfig, and validates Kubernetes API access.
                          */
                         bat '''
-                        echo "Checking Minikube Status..."
-                
-                        REM 1. Try to update context (Fixes IP drift if container restarted)
+                        echo =========================================
+                        echo Preparing Minikube Cluster (consume-only)
+                        echo =========================================
+                        
+                        REM Force Jenkins to use the same kubeconfig as interactive user
+                        set KUBECONFIG=%USERPROFILE%\\.kube\\config
+
+                        set MAX_WAIT_SECONDS=300
+                        set WAIT_INTERVAL=30
+                        set ELAPSED=0
+
+                        :wait_loop
+                        minikube status >nul 2>&1
+                        IF %ERRORLEVEL% EQU 0 (
+                            echo Minikube is running.
+                            goto cluster_ready
+                        )
+
+                        IF %ELAPSED% GEQ %MAX_WAIT_SECONDS% (
+                            echo ERROR: Minikube did not become ready within %MAX_WAIT_SECONDS% seconds.
+                            echo Please start Minikube manually and re-run the pipeline.
+                            exit /b 1
+                        )
+
+                        echo Minikube is not running yet. Waiting %WAIT_INTERVAL% seconds...
+                        timeout /t %WAIT_INTERVAL% /nobreak >nul
+                        set /a ELAPSED=%ELAPSED%+%WAIT_INTERVAL%
+                        goto wait_loop
+
+                        :cluster_ready
+                        echo Refreshing kubeconfig and validating cluster...
+
+                        REM Fix API server IP/port drift if Docker restarted
                         minikube update-context
-                
-                        REM 2. Check status. If it fails (||), THEN start it.
-                        REM We use --embed-certs to prevent future permission errors
-                        minikube status || minikube start --driver=docker --embed-certs
-                
-                        REM 3. Force Jenkins to use the minikube context
+
+                        REM Explicitly select Minikube context
                         kubectl config use-context minikube
-                
-                        REM 4. Verify connection
+
+                        REM Hard validation: Kubernetes API must respond
                         kubectl get nodes
                         '''
                     } else {
