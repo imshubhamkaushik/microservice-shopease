@@ -15,7 +15,15 @@ pipeline {
         
         SONARQUBE = "sonarqube" // Jenkins credential ID for SonarQube, can use different Id as per your choice
         DOCKER_CREDENTIALS = "dockerhub" // Jenkins credential ID for dockerhub, can use different Id as per your choice
-        KUBERNETES_CREDENTIALS = "kubernetes-config" // Jenkins credential ID for kubernetes, can use different Id as per your choice
+        
+        /* 
+         * CLUSTER_TYPE:
+         *  - minikube : local,ephemeral cluster (default for thi project)
+         *  - cloud    : cloud provider managed cluster (EKS, GKE, AKS, etc)
+         */
+        CLUSTER_TYPE = "minikube"
+        
+        KUBERNETES_CREDENTIALS = "kubernetes-config" // Used ONLY for cloud clusters - Jenkins credential ID for kubernetes, can use different Id as per your choice
         DB_PASSWORD_CREDENTIAL_ID = "shopease-db-password" // Jenkins credential ID for DB password, can use different Id as per your choice
         K8S_NAMESPACE = "default"
 
@@ -49,7 +57,7 @@ pipeline {
             parallel {
 
                 // Build and SonarQube for User Service
-                stage('User Service - Build, SonarQube Analysis, and Quality Gate') {
+                stage('User Service - Build and SonarQube') {
                     steps {
                         dir('user-service') {
                             bat 'mvn -B -DskipTests clean package'
@@ -65,7 +73,7 @@ pipeline {
                 }
 
                 // Build and SonarQube for Product Service
-                stage('Product Service - Build, SonarQube Analysis, and Quality Gate') {
+                stage('Product Service - Build and SonarQube') {
                     steps {
                         dir('product-service') {
                             bat 'mvn -B -DskipTests clean package'
@@ -81,7 +89,7 @@ pipeline {
                 }
 
                 // Frontend Service Build
-                stage('Build "Frontend Service"') {
+                stage('Frontend Service - Build') {
                     steps {
                         dir('frontend') {
                             bat 'npm install'
@@ -118,35 +126,40 @@ pipeline {
         // Trivy Scan Docker Images
         stage('Trivy Scan Docker Images') {
             parallel {
-                stage('Scan User Image') {
+                stage('Scan "user-service" Image') {
                     steps {
                         bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${USER_SERVICE_IMAGE}"
                     }
                 }
 
-                stage('Scan Product Image') {
+                stage('Scan "product-service" Image') {
                     steps {
                         bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${PRODUCT_SERVICE_IMAGE}"
                     }
                 }
 
-                stage('Scan Frontend Image') {
+                stage('Scan "frontend-service" Image') {
                     steps {
                         bat "trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${FRONTEND_SERVICE_IMAGE}"
                     }
                 }
             }
         }
-
+        
+        // Docker Login
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKER_CREDENTIALS}", 
+                    usernameVariable: 'DOCKER_USERNAME', 
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
                     bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
                 }
             }
         }
 
-        // Push Docker Images to Registry
+        // Push Docker Images to Registry (Parallel Execution)
         stage ('Push Docker Images (Parallel)') {
             parallel {
                 stage ("User Service Image") {
@@ -167,14 +180,45 @@ pipeline {
             }
         }
 
-        stage('Debug Kubeconfig') {
+        // Kubernetes Cluster Preparation
+        stage('Prepare Kubernetes Cluster') {
             steps {
-                withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
-                    bat '''
-                    kubectl config view
-                    kubectl cluster-info
-                    kubectl get nodes
-                    '''
+                script {
+                    if (CLUSTER_TYPE == "minikube") {
+                        /* MINIKUBE MODE
+                         * - Local, ephemeral cluster
+                         * - API server port changes on restart
+                         * - kubeconfig must be refreshed at runtime
+                         */
+                        bat '''
+                        echo "Checking Minikube Status..."
+                
+                        REM 1. Try to update context (Fixes IP drift if container restarted)
+                        minikube update-context
+                
+                        REM 2. Check status. If it fails (||), THEN start it.
+                        REM We use --embed-certs to prevent future permission errors
+                        minikube status || minikube start --driver=docker --embed-certs
+                
+                        REM 3. Force Jenkins to use the minikube context
+                        kubectl config use-context minikube
+                
+                        REM 4. Verify connection
+                        kubectl get nodes
+                        '''
+                    } else {
+                        /* CLOUD CLUSTER MODE (EKS / GKE / AKS)
+                         * - Long-lived managed cluster
+                         * - kubeconfig stored as Jenkins secret/credential
+                        */
+                        withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
+                            bat '''
+                            echo "Using Cloud Kubernetes Cluster."
+                            kubectl config current-context
+                            kubectl get nodes
+                            '''
+                        }
+                    }
                 }
             }
         }
@@ -185,15 +229,13 @@ pipeline {
                 withCredentials([
                     string(credentialsId: "${DB_PASSWORD_CREDENTIAL_ID}", variable: 'DB_PASSWORD')
                 ]) {
-                    withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
-                        // Use kubectl to create/update secret in the specified namespace
-                        bat '''
-                        kubectl create secret generic shopease-secrets \
-                            --from-literal=DB_PASSWORD=%DB_PASSWORD% \
-                            --from-literal=DB_USER=postgres \
-                            --dry-run=client -o yaml | kubectl apply -f -
-                        '''
-                    }
+                    // Use kubectl to create/update secret in the specified namespace
+                    bat '''
+                    kubectl create secret generic shopease-secrets \
+                        --from-literal=DB_PASSWORD=%DB_PASSWORD% \
+                        --from-literal=DB_USER=postgres \
+                        --dry-run=client -o yaml | kubectl apply -f -
+                    '''
                 }
             }
         }
@@ -209,16 +251,14 @@ pipeline {
         // Deploy to Kubernetes Using Helm
         stage('Deploy to Kubernetes Using Helm') {
             steps {
-                withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
-                    bat "helm upgrade --install shopease ${HELM_CHART_DIR} --namespace ${K8S_NAMESPACE} --create-namespace"
-                }
+                bat "helm upgrade --install shopease ${HELM_CHART_DIR} --namespace ${K8S_NAMESPACE} --create-namespace"
             }
         }
     }
 
     // Post Actions
     post {
-        success { echo 'Pipeline successful!!!' }
+        success { echo 'Pipeline Successful!!!' }
         failure { echo 'Pipeline Failed!!! Check Jenkins logs!!!' }
     }
 }
