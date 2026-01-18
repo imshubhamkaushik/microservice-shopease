@@ -153,7 +153,7 @@ microservice-shopease/
 - Build and runtime stages are separated
 - Lightweight runtime images are used to reduce attack surface
 
-This improves security, portability, and deployment consistency.
+This improves **security, portability, and deployment consistency**.
 
 ---
 
@@ -199,9 +199,6 @@ Security is treated as a **first-class citizen** throughout the CI/CD lifecycle.
 
 - Unit Tests
   - Validate core service logic using JUnit and Mockito
-- Controller Tests
-  - Web-layer behavior tested using Spring @WebMvcTest
-  - Security filters disabled to isolate controller logic
 - Integration Tests
   - Database interactions tested using Testcontainers with PostgreSQL
 
@@ -209,7 +206,7 @@ Security is treated as a **first-class citizen** throughout the CI/CD lifecycle.
 
 - Tests run automatically via:
 
-```nginx
+```bash
 mvn clean verify
 ```
 
@@ -238,7 +235,7 @@ This project implements production-style monitoring and alerting for Kubernetes-
 
 ```
 Application → Prometheus → (Metrics) → Grafana
-             Prometheus → (Alerts)  → Alertmanager
+              Prometheus → (Alerts)  → Alertmanager
 ```
 
 ### Metrics Collection
@@ -258,7 +255,7 @@ Collected metrics include:
   - Service availability (up)
   - HTTP request rate and error rate
   - Latency (P95) using Prometheus histograms
-  - JVM process CPU usage
+  - JVM CPU usage
   - JVM heap memory usage
 
 Metrics are labeled by service and namespace, enabling clean dashboards and scalable alerting.
@@ -315,6 +312,35 @@ Scripts provide:
 - Safe cleanup of non-production monitoring resources
 
 These scripts reduce repetitive manual commands and standardize common operational workflows.
+
+### Script Execution Scope
+
+All operational scripts in this project are written in Bash and are intended to be
+executed on Linux environments (Ubuntu preferred).
+
+Windows support is intentionally out of scope to avoid non-production Bash-on-Windows
+behavior. CI/CD automation remains fully handled by Jenkins.
+
+---
+
+## Windows Jenkins + Minikube: Important Note
+
+When running Jenkins as a Windows service, Kubernetes authentication requires a kubeconfig for the service account
+
+If the pipeline fails with:
+
+```nginx
+Please enter Username: error: EOF
+```
+
+Ensure kubeconfig exists at:
+
+```
+C:\Windows\System32\config\systemprofile\.kube\config
+```
+
+The pipeline does not manage Minikube lifecycle.
+It only validates cluster availability to avoid state corruption.
 
 ---
 

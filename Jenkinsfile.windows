@@ -18,10 +18,11 @@ pipeline {
         
         /* 
          * CLUSTER_TYPE:
-         *  - minikube : local,ephemeral cluster (default for thi project)
+         *  - minikube : local,ephemeral cluster (default for this project)
+         *  - docker-desktop : local kubenetes via Docker Desktop
          *  - cloud    : cloud provider managed cluster (EKS, GKE, AKS, etc)
          */
-        CLUSTER_TYPE = "minikube"
+        CLUSTER_TYPE = "docker-desktop"
         
         KUBERNETES_CREDENTIALS = "kubernetes-config" // Used ONLY for cloud clusters - Jenkins credential ID for kubernetes, can use different Id as per your choice
         DB_PASSWORD_CREDENTIAL_ID = "shopease-db-password" // Jenkins credential ID for DB password, can use different Id as per your choice
@@ -180,7 +181,7 @@ pipeline {
             }
         }
         /*
-        * WINDOWS + JENKINS + MINIKUBE NOTE
+        * WINDOWS + JENKINS + LOCAL KUBERNETES NOTE
         *
         * Jenkins runs as a Windows service and uses its own user profile.
         * Kubernetes access requires a kubeconfig at:
@@ -197,69 +198,59 @@ pipeline {
         stage('Prepare Kubernetes Cluster') {
             steps {
                 script {
-                    if (CLUSTER_TYPE == "minikube") {
-                        /* MINIKUBE MODE - WITH BOUNDED WAIT
-                         * - Local, ephemeral cluster
-                         * - API server port changes on restart
-                         * - kubeconfig must be refreshed at runtime
-                         * - Jenkins does NOT start Minikube.
-                         * - It waits for Minikube to become available (up to a max timeout),
-                         * - refreshes kubeconfig, and validates Kubernetes API access.
-                         */
+                    if (CLUSTER_TYPE == "docker-desktop") {
+                        /* DOCKER DESKTOP KUBERNETES MODE
+                         * - Local Kubernetes managed by Docker Desktop
+                         * - Stable API server and kubeconfig
+                         * - No cluster lifecycle management in CI
+                         * - Jenkins only validates access
+                        */
                         bat '''
+                        @echo off
                         echo =========================================
-                        echo Preparing Minikube Cluster (consume-only)
+                        echo Preparing Docker Desktop Kubernetes Cluster
                         echo =========================================
                         
                         REM Force Jenkins to use the same kubeconfig as interactive user
-                        set KUBECONFIG=%USERPROFILE%\\.kube\\config
+                        set KUBECONFIG=%USERPROFILE%\\.kube\\config 
+                        echo KUBECONFIG=%KUBECONFIG%
 
-                        set MAX_WAIT_SECONDS=300
-                        set WAIT_INTERVAL=30
-                        set ELAPSED=0
-
-                        :wait_loop
-                        minikube status >nul 2>&1
-                        IF %ERRORLEVEL% EQU 0 (
-                            echo Minikube is running.
-                            goto cluster_ready
-                        )
-
-                        IF %ELAPSED% GEQ %MAX_WAIT_SECONDS% (
-                            echo ERROR: Minikube did not become ready within %MAX_WAIT_SECONDS% seconds.
-                            echo Please start Minikube manually and re-run the pipeline.
-                            exit /b 1
-                        )
-
-                        echo Minikube is not running yet. Waiting %WAIT_INTERVAL% seconds...
-                        timeout /t %WAIT_INTERVAL% /nobreak >nul
-                        set /a ELAPSED=%ELAPSED%+%WAIT_INTERVAL%
-                        goto wait_loop
-
-                        :cluster_ready
-                        echo Refreshing kubeconfig and validating cluster...
-
-                        REM Fix API server IP/port drift if Docker restarted
-                        minikube update-context
-
-                        REM Explicitly select Minikube context
-                        kubectl config use-context minikube
+                        echo Switching to docker-desktop context
+                        kubectl config use-context docker-desktop
+                        
+                        REM Soft validation: Check current context
+                        echo Kubernetes context:
+                        kubectl config current-context
 
                         REM Hard validation: Kubernetes API must respond
+                        echo Validating cluster access...
                         kubectl get nodes
                         '''
-                    } else {
+                    } else if (CLUSTER_TYPE == "cloud") {
                         /* CLOUD CLUSTER MODE (EKS / GKE / AKS)
                          * - Long-lived managed cluster
                          * - kubeconfig stored as Jenkins secret/credential
                         */
                         withKubeConfig(credentialsId: "${KUBERNETES_CREDENTIALS}") {
                             bat '''
-                            echo "Using Cloud Kubernetes Cluster."
+                            @echo off
+                            echo =========================================
+                            echo Preparing Cloud Kubernetes Cluster
+                            echo =========================================
+
+                            REM kubectl config use-context is optional, depending on kubeconfig contents 
+                        
+                            REM Soft validation: Check current context
+                            echo Kubernetes context:
                             kubectl config current-context
+
+                            REM Hard validation: Kubernetes API must respond
+                            echo Validating cluster access...
                             kubectl get nodes
                             '''
                         }
+                    } else {
+                        error "Invalid CLUSTER_TYPE: ${CLUSTER_TYPE}. Invalid types are 'docker-desktop' and 'cloud'."
                     }
                 }
             }

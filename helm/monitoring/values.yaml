@@ -33,8 +33,15 @@ alertmanager:
         memory: 256Mi
 
   config:
+    global:
+      resolve_timeout: 5m
+
     route:
       receiver: "default"
+      group_by: ["alertname", "namespace", "service"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 3h
     receivers:
       - name: "default"
 
@@ -68,7 +75,7 @@ additionalPrometheusRules:
               sum by (namespace, service) (
                 up{job="kubernetes-service-endpoints"}
               ) == 0
-            for: 1m
+            for: 3m
             labels:
               severity: critical
             annotations:
@@ -80,9 +87,9 @@ additionalPrometheusRules:
           - alert: HighCPUUsage
             expr: |
               sum by (pod, namespace)(
-                rate(container_cpu_usage_seconds_total{container!="",image!=""}[1m])
+                rate(container_cpu_usage_seconds_total{container!="",image!=""}[5m])
               ) > 0.8
-            for: 1m
+            for: 5m
             labels:
               severity: warning
             annotations:
@@ -98,7 +105,7 @@ additionalPrometheusRules:
                 /
                 jvm_memory_max_bytes{area="heap"}
               ) > 0.80
-            for: 1m
+            for: 5m
             labels:
               severity: warning
             annotations:
