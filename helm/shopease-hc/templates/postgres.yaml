@@ -27,6 +27,7 @@ spec:
             runAsNonRoot: true
             runAsUser: 999
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -60,6 +61,13 @@ spec:
             # This name must match the volumeClaimTemplates name
             - name: pgdata
               mountPath: /var/lib/postgresql/data
+            - name: tmp-volume
+              mountPath: /tmp
+            - name: tmp-volume
+              mountPath: /run/postgresql
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}
 
   # --- PVC AUTOPROVISIONING (CRITICAL FOR DATA PERSISTENCE) ---
   volumeClaimTemplates:

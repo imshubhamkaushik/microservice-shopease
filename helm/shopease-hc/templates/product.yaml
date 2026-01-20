@@ -26,6 +26,7 @@ spec:
             runAsNonRoot: true
             runAsUser: 999
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -48,7 +49,7 @@ spec:
       containers:
         - name: product-service
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.productService.image.repository }}:{{ .Values.productService.image.tag }}"
-          imagePullPolicy: {{ .Values.productService.image.pullPolicy | default "IfNotPresent" }}
+          imagePullPolicy: {{ .Values.productService.image.pullPolicy }}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000

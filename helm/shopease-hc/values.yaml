@@ -1,5 +1,5 @@
 global:
-  imageRegistry: "docker.io/imshubhamkaushik"
+  imageRegistry: ""
 
 ingress:
   enabled: true
@@ -12,7 +12,8 @@ ingress:
 frontendService:
   image:
     repository: "frontend-service"
-    tag: "1.0.6"
+    tag: latest
+    pullPolicy: "IfNotPresent"
   replicaCount: 1
   service:
     port: 80
@@ -27,7 +28,7 @@ frontendService:
 userService:
   image:
     repository: "user-service"
-    tag: "1.0.6"
+    tag: latest
     pullPolicy: "IfNotPresent"
   service:
     port: 8081
@@ -46,7 +47,7 @@ userService:
 productService:
   image:
     repository: "product-service"
-    tag: "1.0.6"
+    tag: latest
     pullPolicy: "IfNotPresent"
   service:
     port: 8082
