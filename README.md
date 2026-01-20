@@ -1,12 +1,12 @@
 # End-to-End DevSecOps CI/CD Pipeline for Microservices
 
-**(Jenkins · Docker · Kubernetes · Helm · SonarQube · Trivy · Prometheus · Grafana · Bash)**
+**(Jenkins · Docker · Amazon ECR · Amazon EKS · Helm · SonarQube · Trivy · Prometheus · Grafana )**
 
 ---
 
 ## Project Overview
 
-This project demonstrates the design and implementation of an end-to-end DevSecOps CI/CD pipeline for a containerized, microservices-based application running on Kubernetes.
+This project demonstrates the design and implementation of an **end-to-end DevSecOps CI/CD pipeline** for a containerized, microservices-based application deployed on Amazon EKS.
 
 The primary objective is to showcase secure, automated application delivery using modern DevOps and DevSecOps practices, including:
 
@@ -47,7 +47,7 @@ Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of s
 - **Security & Quality**: SonarQube, Trivy
 - **Backend Services**: Spring Boot (Microservices)
 - **Frontend**: React
-- **Scripting & Automation**: Bash
+- **Scripting & Automation**: Bash (Linux Only)
 - **Container Runtime**: Linux
 - **Monitoring**: Prometheus, Grafana
 
@@ -74,16 +74,17 @@ Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of s
 
 The Jenkins pipeline follows a stage-based DevSecOps workflow:
 
-1. Source code checkout from Git
+1. Source code checkout from GitHub
 2. Parallel unit testing for backend microservices
 3. Static code analysis using SonarQube
 4. Quality gate enforcement to prevent insecure builds
 5. Docker image build for all services
 6. Container image vulnerability scanning using Trivy
-7. Push images to container registry
+7. Push images to container registry(Amazon ECR)
 8. Kubernetes secret creation using Jenkins credentials
 9. Security scanning of Helm/Kubernetes manifests using Trivy
-10. Deployment to Kubernetes using Helm
+10. Deployment to Kubernetes(Amazon EKS) using Helm
+11. Post-deployment observability validation
 
 This workflow ensures **secure, repeatable, and automated deployments**.
 
@@ -299,6 +300,16 @@ Alerts include service and namespace labels, making correlation with dashboards 
 
 ---
 
+## Monitoring Deployment Model
+
+- Monitoring stack is not deployed by Jenkins
+- Deployed separately via Helm
+- Jenkins only verifies presence, never mutates monitoring state
+
+This avoids coupling CI/CD with cluster observabiity lifecycle
+
+---
+
 ## Operational Automation (Bash Scripts)
 
 Bash scripts are used to **improve operational usability**, without replacing Jenkins or Helm.
@@ -318,29 +329,19 @@ These scripts reduce repetitive manual commands and standardize common operation
 All operational scripts in this project are written in Bash and are intended to be
 executed on Linux environments (Ubuntu preferred).
 
-Windows support is intentionally out of scope to avoid non-production Bash-on-Windows
-behavior. CI/CD automation remains fully handled by Jenkins.
+Windows support is intentionally out of scope to avoid non-production Bash-on-Windows behavior. CI/CD automation remains fully handled by Jenkins.
 
 ---
 
-## Windows Jenkins + Minikube: Important Note
+## Windows Jenkins + Local Kubernetes: Important Note
 
 When running Jenkins as a Windows service, Kubernetes authentication requires a kubeconfig for the service account
 
-If the pipeline fails with:
+= Kubernetes access requires a valid kubeconfig for the service account
+- Docker Desktop Kubernetes is the recommended local cluster
+- Jenkins does not manage cluster lifecycle
 
-```nginx
-Please enter Username: error: EOF
-```
-
-Ensure kubeconfig exists at:
-
-```
-C:\Windows\System32\config\systemprofile\.kube\config
-```
-
-The pipeline does not manage Minikube lifecycle.
-It only validates cluster availability to avoid state corruption.
+This avoids state corruption and authentication issues.
 
 ---
 
@@ -385,4 +386,4 @@ These constraints are intentional to keep the project focused and explainable.
 - Managing Kubernetes deployments using Helm
 - Applying DevSecOps principles in real-world workflows
 - Building service-level observability using Prometheus and Grafana
-- Writing practical Bash automation for operations
+- Cost-conscious cloud experimentation
