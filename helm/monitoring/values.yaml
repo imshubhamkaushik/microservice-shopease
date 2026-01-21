@@ -11,6 +11,9 @@ prometheus:
     # Allow Prometheus to discover ServiceMonitors created by the chart
     serviceMonitorSelectorNilUsesHelmValues: false
 
+    # Allow Prometheus to discover PodMonitors created by the chart
+    podMonitorSelectorNilUsesHelmValues: false
+
     resources:
       requests:
         cpu: 100m
@@ -18,6 +21,14 @@ prometheus:
       limits:
         cpu: 500m
         memory: 512Mi
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
 
 # Alertmanager
 alertmanager:
@@ -49,12 +60,15 @@ alertmanager:
 grafana:
   enabled: true
 
-  #This is explicitly for demo. Never do this in real prod
-  adminUser: admin
-  adminPassword: admin
+  # This is explicitly for demo. Never do this in real prod
+  # adminUser: admin
+  # adminPassword: admin
+
+  admin:
+    existingSecret: ""
 
   service:
-    type: NodePort
+    type: ClusterIP
 
   resources:
     requests:
@@ -66,7 +80,7 @@ grafana:
 
 # Custom Alert Rules (Equivalent to prometheus-alerts.yaml)
 additionalPrometheusRules:
-  - name: application-alerts
+  - name: shopease-alerts
     groups:
       - name: service-availability
         rules:
@@ -88,13 +102,18 @@ additionalPrometheusRules:
             expr: |
               sum by (pod, namespace)(
                 rate(container_cpu_usage_seconds_total{container!="",image!=""}[5m])
-              ) > 0.8
+              )
+              /
+              sum by (pod, namespace)(
+                kube_pod_container_resource_limits_cpu_cores
+              )
+              > 0.8
             for: 5m
             labels:
               severity: warning
             annotations:
               summary: "High CPU usage on {{ $labels.service }} detected"
-              description: "CPU usage above 80%."
+              description: "CPU usage above 80% for 5 minutes."
 
       - name: jvm-memory-alerts
         rules:

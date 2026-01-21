@@ -115,5 +115,6 @@ spec:
   selector:
     app: product-service
   ports:
-    - port: {{ .Values.productService.service.port | default 8082 }}
+    - name: http
+      port: {{ .Values.productService.service.port | default 8082 }}
       targetPort: {{ .Values.productService.service.port | default 8082 }}
