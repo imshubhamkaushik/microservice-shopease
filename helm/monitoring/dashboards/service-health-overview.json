@@ -646,7 +646,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(http_server_requests_seconds_count,$service)",
+          "query": "label_values(http_server_requests_seconds_count,service)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
