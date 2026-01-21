@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: shopease-services
+  labels:
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - shopease
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - user-service
+          - product-service
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 15s

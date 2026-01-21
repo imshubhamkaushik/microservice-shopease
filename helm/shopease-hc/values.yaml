@@ -1,5 +1,6 @@
 global:
   imageRegistry: ""
+  imageTag: "latest"
 
 ingress:
   enabled: true
@@ -12,7 +13,6 @@ ingress:
 frontendService:
   image:
     repository: "frontend-service"
-    tag: latest
     pullPolicy: "IfNotPresent"
   replicaCount: 1
   service:
@@ -28,7 +28,6 @@ frontendService:
 userService:
   image:
     repository: "user-service"
-    tag: latest
     pullPolicy: "IfNotPresent"
   service:
     port: 8081
@@ -47,7 +46,6 @@ userService:
 productService:
   image:
     repository: "product-service"
-    tag: latest
     pullPolicy: "IfNotPresent"
   service:
     port: 8082
