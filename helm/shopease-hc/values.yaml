@@ -1,6 +1,7 @@
 global:
   imageRegistry: ""
   imageTag: "latest"
+  cloudProvider: "local"
 
 ingress:
   enabled: true
@@ -67,6 +68,7 @@ postgres:
   username: postgres
   db: shopease
   port: 5432
+  storageClass: ""
   storage:
     size: 5Gi
 

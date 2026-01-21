@@ -48,7 +48,7 @@ spec:
               echo "Postgres is up - continuing"
       containers:
         - name: user-service
-          image: "{{ .Values.global.imageRegistry }}/{{ .Values.userService.image.repository }}:{{ .Values.userService.global.imageTag }}"
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.userService.image.repository }}:{{ .Values.global.imageTag }}"
           imagePullPolicy: {{ .Values.userService.image.pullPolicy }}
           securityContext:
             runAsNonRoot: true

@@ -74,12 +74,13 @@ spec:
     - metadata:
         name: pgdata # Name used in the volumeMounts section
       spec:
-        accessModes: ["ReadWriteOnce"] # Only one pod can mount it
-        # storageClassName: {{ .Values.global.storageClass | default "" | quote }} # Set your StorageClass if needed
+        accessModes: ["ReadWriteOnce"] # Only one pod can mount it at a time
         resources:
           requests:
             storage: {{ .Values.postgres.storage.size | default "5Gi" }} # Change this to your required disk size
-        # NOTE: For Minikube, this uses the default StorageClass
+        {{- if .Values.postgres.storageClass }}
+        storageClassName: {{ .Values.postgres.storageClass }}
+        {{- end }}
 ---
 # Service Definition (Remains the same for DNS)
 apiVersion: v1
