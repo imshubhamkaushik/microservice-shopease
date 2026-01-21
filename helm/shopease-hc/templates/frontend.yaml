@@ -20,7 +20,7 @@ spec:
         runAsNonRoot: true
       containers:
         - name: frontend
-          image: "{{ .Values.global.imageRegistry }}/{{ .Values.frontendService.image.repository }}:{{ .Values.frontendService.global.imageTag }}"
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.frontendService.image.repository }}:{{ .Values.global.imageTag }}"
           ports:
             - name: http
               containerPort: {{ .Values.frontendService.service.port | default 80 }}
