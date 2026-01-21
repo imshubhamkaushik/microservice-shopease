@@ -1,6 +1,9 @@
 # kube-prometheus-stack values
 # Aligned with previous manual Prometheus/Grafana setup
 
+global:
+  targetNamespace: shopease
+
 kube-prometheus-stack:
 
 # Prometheus
