@@ -1,13 +1,14 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: shopease-services
+  name: shopease-services\
+  namespace: {{ .Release.Namespace }}
   labels:
-    release: monitoring
+    release: {{ .Release.Name }}
 spec:
   namespaceSelector:
     matchNames:
-      - shopease
+      - {{ .Values.global.targetNamespace | default "shopease" }}
   selector:
     matchExpressions:
       - key: app
@@ -15,7 +16,9 @@ spec:
         values:
           - user-service
           - product-service
+          # - frontend-service  # Commented since frontend does not expose Prometheus metrics
   endpoints:
     - port: http
       path: /actuator/prometheus
       interval: 15s
+      scrapeTimeout: 10s
