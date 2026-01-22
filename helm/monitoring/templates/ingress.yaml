@@ -11,8 +11,8 @@ metadata:
     # Internal ALB prevents accidental public exposure.
 
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    # alb.ingress.kubernetes.io/ssl-redirect: '80'
     # HIGHLIGHT:
     # Secure-by-default access (VPN / bastion / private DNS).
 
@@ -26,7 +26,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: shopease-monitoring-grafana
+                name: monitoring-grafana
                 port:
                   number: 80
 
@@ -37,7 +37,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: shopease-monitoring-kube-prometheus-stack-prometheus
+                name: monitoring-kube-prometheus-stack-prometheus
                 port:
                   number: 9090
 
@@ -48,6 +48,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: shopease-monitoring-kube-prometheus-stack-alertmanager
+                name: monitoring-kube-prometheus-stack-alertmanager
                 port:
                   number: 9093
