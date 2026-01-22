@@ -32,6 +32,7 @@ kube-prometheus-stack:
       storageSpec:
         volumeClaimTemplate:
           spec:
+            storageClassName: gp2
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
@@ -84,6 +85,12 @@ kube-prometheus-stack:
       datasources:
         enabled: true
         label: grafana_datasource
+    
+    persistence:
+      enabled: true
+      storageClassName: gp2
+      accessModes: ["ReadWriteOnce"]
+      size: 2Gi
 
     resources:
       requests:
