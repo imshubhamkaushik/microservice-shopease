@@ -6,7 +6,7 @@
 
 ## Project Overview
 
-This project demonstrates the design and implementation of an **end-to-end DevSecOps CI/CD pipeline** for a containerized, microservices-based application deployed on Amazon EKS.
+This project demonstrates the design and implementation of an **end-to-end DevSecOps CI/CD pipeline** for a containerized, microservices-based application deployed on Amazon EKS, with Jenkins running on Amazon EC2 and conatiner images stored in Amazon ECR.
 
 The primary objective is to showcase secure, automated application delivery using modern DevOps and DevSecOps practices, including:
 
@@ -18,7 +18,7 @@ The primary objective is to showcase secure, automated application delivery usin
 - Monitoring and alerting using Prometheus and Grafana
 - Operational automation using Bash Scripts
 
-The project intentionally focuses on **pipeline design, security integration, deployment automation, and observabiliy**, rather than application business logic.
+The project intentionally focuses on **pipeline design, security integration, deployment automation, and observability**, rather than application business logic.
 
 ---
 
@@ -42,7 +42,8 @@ Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of s
 
 - **CI/CD**: Jenkins
 - **Containerization**: Docker
-- **Orchestration**: Kubernetes
+- **Cloud Platform**: AWS (EC2, EKS,ECR, IAM)
+- **Orchestration**: Kubernetes (Amazon EKS)
 - **Package Management**: Helm
 - **Security & Quality**: SonarQube, Trivy
 - **Backend Services**: Spring Boot (Microservices)
@@ -50,6 +51,45 @@ Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of s
 - **Scripting & Automation**: Bash (Linux Only)
 - **Container Runtime**: Linux
 - **Monitoring**: Prometheus, Grafana
+
+---
+
+## Cloud Platform and Infrastructure (AWS)
+
+This project is deployed and validated on Amazon Web Services (AWS) to simulate a production-like cloud environment.
+
+**AWS Services Used**
+
+- **Amazon EC2** 
+    - Hosts Jenkins and supporting CI/CD tooling
+    - Hosts SonarQube on a Separate instance for isolation
+    - This separation improves stability, mirrors common enterprise CI/CD layouts, and avoids performance contention between pipeline execution and static analysis.
+- **Amazon EKS** 
+    - Managed Kubernetes cluster for application runtime
+- **Amazon ECR**
+    - Private container registry for application images
+- **AWS IAM**
+    - Fine-grained access control for EKS and ECR integration
+
+**Design Considerations**
+
+- Jenkins runs on EC2 to reflect commonly used self-managed CI/CD setups.
+- SonarQube runs on a separate EC2 instance to isolate resource-intensive analysis workloads.
+- Kubernetes workloads run on Amazon EKS, leveraging a managed control plane while retaining full Kubernetes primitives.
+- Container images are securely pushed to and pulled from Amazon ECR using IAM-based authentication.
+- Static cloud credentials are avoided wherever possible in favor of IAM roles and policies. 
+
+This approach balances cloud realism with project scope clarity, keeping the focus on DevSecOps workflows rather than infrastructure automation.
+
+### Identity & Access Management (AWS IAM)
+
+The project uses AWS IAM roles and policies to enforce secure, least-privilege access across CI/CD and Kubernetes components:
+
+- IAM roles and policies are configured for Amazon EKS to allow cluster control plane operations and managed add-ons.
+- IAM permissions enable Kubernetes worker nodes and CI/CD tooling to pull container images securely from Amazon ECR.
+- Access to AWS services is authenticated using IAM-based mechanisms rather than static credentials wherever possible.
+
+This setup reflects real-world cloud security practices by separating responsibilities between CI/CD tooling, Kubernetes runtime, and AWS-managed services.
 
 ---
 
@@ -66,11 +106,91 @@ Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of s
 - Kubernetes handles service orchestration, scaling, and health checks
 - Prometheus and Grafana provide service-level monitoring and alerting
 
- Architecture diagram will be added in a future update.
+#### High-Level Architecture Diagram
+```mermaid
+flowchart TD
+    Dev[Developer<br/>Git Push] --> Git[Git Repository]
 
----
+    Git --> Jenkins[Jenkins CI/CD<br/>(EC2)]
 
-## CI/CD Pipeline Workflow
+    Jenkins -->|Build & Test| Docker[Docker Images]
+    Jenkins -->|Scan| Sonar[SonarQube<br/>(EC2)]
+    Jenkins -->|Security Scan| Trivy[Trivy]
+    Jenkins -->|Push Images| ECR[Amazon ECR]
+    Jenkins -->|Deploy via Helm| EKS[Amazon EKS]
+
+    subgraph EKS["Amazon EKS Cluster"]
+        subgraph AppNS["Namespace: shopease"]
+            FE[Frontend]
+            US[User Service]
+            PS[Product Service]
+            DB[(Postgres<br/>StatefulSet + PVC)]
+        end
+
+        subgraph MonNS["Namespace: monitoring"]
+            Prom[Prometheus]
+            Graf[Grafana]
+            Alert[Alertmanager]
+        end
+    end
+
+    FE --> US
+    FE --> PS
+    US --> DB
+    PS --> DB
+
+    AppNS -->|Metrics| Prom
+    Prom --> Graf
+    Prom --> Alert
+```
+
+The system is intentionally divided into three independent layers, mirroring real-world production architectures:
+
+- CI/CD & Automation
+- Application Runtime (Kubernetes)
+- Observability & Monitoring
+
+### Application Runtime
+
+Applications run on Kubernetes,packaged and deployed using Helm.
+
+Namespace: ```shopease```
+
+Deployed workloads:
+
+- ``frontend`` – UI service (Deployment)
+- ``user-service`` – Backend microservice (Deployment)
+- ``product-service`` – Backend microservice (Deployment)
+- ``postgres`` – Database (StatefulSet + PVC)
+
+Runtime characteristics
+
+- Containers run as non-root
+- Persistent storage managed via PVCs
+- Init containers enforce startup ordering
+- Internal communication via Kubernetes Services
+
+This setup ensures secure defaults, correct stateful behavior, and production-aligned Kubernetes patterns.
+
+### Observability & Monitoring
+
+Monitoring is deployed as cluster-level infrastructure, decoupled from the CI/CD pipeline.
+
+Namespace: ``monitoring``
+
+Components:
+
+- Prometheus (StatefulSet + PVC)
+- Grafana (Dashboards & visualization)
+- Alertmanager
+- kube-state-metrics
+- node-exporter
+
+Monitoring is installed once per cluster and operates independently of application deployments.
+
+This avoids unnecessary redeployments and reflects real-world platform engineering practices.
+
+### CI/CD Pipeline Workflow
 
 The Jenkins pipeline follows a stage-based DevSecOps workflow:
 
@@ -87,6 +207,8 @@ The Jenkins pipeline follows a stage-based DevSecOps workflow:
 11. Post-deployment observability validation
 
 This workflow ensures **secure, repeatable, and automated deployments**.
+Jenkins is **intentionally scoped to applicaion delivery only**.
+Cluster-wide infrastructure (e.g., monitoring) is not redeployed on every pipeline execution.
 
 ---
 
@@ -217,7 +339,7 @@ mvn clean verify
 ### Code Coverage
 
 - JaCoCo generates coverage reports for visibility
-- 0Coverage reports are reviewed but strict percentage gates are intentionally not enforced
+- Coverage reports are reviewed but strict percentage gates are intentionally not enforced
 
 This avoids artificial test inflation and keeps the focus on meaningful testing and CI stability.
 
@@ -249,7 +371,7 @@ prometheus.io/path: /actuator/prometheus
 prometheus.io/port: "8081" / "8082"
 ```
 - Microservices expose metrics via Spring Boot Actuator (``/actuator/prometheus``)
-- Prometheus discovers targets automatically using Kubenetes-native mechanisms
+- Prometheus discovers targets automatically using Kubernetes-native mechanisms
 
 Collected metrics include:
 

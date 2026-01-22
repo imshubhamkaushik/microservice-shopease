@@ -3,11 +3,31 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: shopease-ingress
-  namespace: default
+  namespace: shopease
   annotations:
-    kubernetes.io/ingress.class: nginx
+    kubernetes.io/ingress.class: alb
+    # HIGHLIGHT:
+    # Using AWS ALB Ingress Controller (EKS-native).
+    # Avoids managing NGINX, certificates, scaling, and node exposure.
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    # HIGHLIGHT:
+    # Application is intentionally internet-facing.
+    # Backend services remain private behind the ALB.
+    alb.ingress.kubernetes.io/target-type: ip
+    # HIGHLIGHT:
+    # Targets pods directly instead of nodes.
+    # Required best practice for EKS + ALB.
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # HIGHLIGHT:
+    # TLS-ready design (ACM can be attached later).
+    # Enforces HTTPS without app-level changes.
+    alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/success-codes: "200-399"
+    # HIGHLIGHT:
+    # Health checks terminate at service layer, not pod IPs.
 spec:
-  ingressClassName: nginx
+  ingressClassName: alb
   rules:
     - host: {{ .Values.ingress.host | default "shop.local" }}
       http:

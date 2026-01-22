@@ -117,49 +117,47 @@ kube-prometheus-stack:
       groups:
         - name: service-availability
           rules:
-            - alert: ServiceDown
+            - alert: ServiceUnavailable
               expr: |
-                sum by (namespace, service) (
+                sum by (service, namespace) (
                   up{job="kubernetes-service-endpoints"}
                 ) == 0
               for: 3m
               labels:
                 severity: critical
               annotations:
-                summary: "Service {{ $labels.service }} is DOWN"
-                description: "Service {{ $labels.service }} is not responding."
+                summary: "Service {{ $labels.service }} is unavailable"
+                description: "No active endpoints for service {{ $labels.service }}"
 
-        - name: cpu-alerts
+        - name: error-rate
           rules:
-            - alert: HighCPUUsage
+            - alert: HighErrorRate
               expr: |
-                sum by (pod, namespace)(
-                  rate(container_cpu_usage_seconds_total{container!="",image!=""}[5m])
-                )
+                sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
                 /
-                sum by (pod, namespace)(
-                  kube_pod_container_resource_limits_cpu_cores
-                )
-                > 0.8
+                sum(rate(http_server_requests_seconds_count[5m]))
+                > 0.05
               for: 5m
               labels:
-                severity: warning
+                severity: critical
               annotations:
-                summary: "High CPU usage on {{ $labels.service }} detected"
-                description: "CPU usage above 80% for 5 minutes."
+                summary: "High error rate detected"
+                description: "5xx responses exceed 5% of total traffic"
 
-        - name: jvm-memory-alerts
+
+        - name: high-latency
           rules:
-            - alert: HighJVMMemoryUsage
+            - alert: HighLatencyP95
               expr: |
-                (
-                  jvm_memory_used_bytes{area="heap"}
-                  /
-                  jvm_memory_max_bytes{area="heap"}
-                ) > 0.80
+                histogram_quantile(
+                  0.95,
+                  sum by (le, service) (
+                    rate(http_server_requests_seconds_bucket[5m])
+                  )
+                ) > 1.5
               for: 5m
               labels:
                 severity: warning
               annotations:
-                summary: "High JVM heap usage on {{ $labels.service }}"
-                description: "Heap usage exceeded 80%."
+                summary: "High latency detected (p95)"
+                description: "95th percentile latency exceeds 1.5s"
