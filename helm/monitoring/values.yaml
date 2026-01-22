@@ -32,7 +32,7 @@ kube-prometheus-stack:
       storageSpec:
         volumeClaimTemplate:
           spec:
-            storageClassName: gp2
+            storageClassName: "gp3-sc"
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
@@ -88,7 +88,7 @@ kube-prometheus-stack:
     
     persistence:
       enabled: true
-      storageClassName: gp2
+      storageClassName: "gp3-sc"
       accessModes: ["ReadWriteOnce"]
       size: 2Gi
 
