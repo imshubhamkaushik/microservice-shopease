@@ -17,8 +17,8 @@ metadata:
     # HIGHLIGHT:
     # Targets pods directly instead of nodes.
     # Required best practice for EKS + ALB.
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    alb.ingress.kubernetes.io/ssl-redirect: 'false'
     # HIGHLIGHT:
     # TLS-ready design (ACM can be attached later).
     # Enforces HTTPS without app-level changes.
@@ -29,8 +29,9 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-    - host: {{ .Values.ingress.host | default "shop.local" }}
-      http:
+    # WAS: - host: {{ .Values.ingress.host | default "shop.local" }}
+    # Remove the host line and unindent the http block below so it applies to ALL hosts
+    - http:
         paths:
           # React Frontend (handles SPA routes)
           - path: {{ .Values.ingress.paths.frontend | default "/" }}
