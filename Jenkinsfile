@@ -43,24 +43,16 @@ pipeline {
 
     stages {
 
-        stage('Checkout Source Code') {
-            steps {
-                cleanWs()
-                // Explicitly tell Jenkins to pull the 'main' branch
-                git branch: 'main', url: 'https://github.com/imshubhamkaushik/microservice-shopease.git'
-            }
-        }
-
         stage('Unit & Integration Tests (Backend)') {
             parallel {
-                stage('User Service Tests') {
+                stage('User Service') {
                     steps {
                         dir('user-service') {
                             sh 'mvn -B clean verify'
                         }
                     }
                 }
-                stage('Product Service Tests') {
+                stage('Product Service') {
                     steps {
                         dir('product-service') {
                             sh 'mvn -B clean verify'
@@ -73,7 +65,7 @@ pipeline {
         stage('Build & SonarQube Analysis') {
             parallel {
 
-                stage('User Service - SonarQube') {
+                stage('User Service') {
                     steps {
                         dir('user-service') {
                             sh 'mvn -B clean package'
@@ -87,7 +79,7 @@ pipeline {
                     }
                 }
 
-                stage('Product Service - SonarQube') {
+                stage('Product Service') {
                     steps {
                         dir('product-service') {
                             sh 'mvn -B clean package'
@@ -114,17 +106,17 @@ pipeline {
 
         stage('Build Docker Images') {
             parallel {
-                stage('User Service Image') {
+                stage('User Service') {
                     steps {
                         sh "docker build -t ${USER_SERVICE_IMAGE} user-service"
                     }
                 }
-                stage('Product Service Image') {
+                stage('Product Service') {
                     steps {
                         sh "docker build -t ${PRODUCT_SERVICE_IMAGE} product-service"
                     }
                 }
-                stage('Frontend Service Image') {
+                stage('Frontend Service') {
                     steps {
                         sh "docker build -t ${FRONTEND_SERVICE_IMAGE} frontend"
                     }
@@ -134,7 +126,7 @@ pipeline {
 
         stage('Trivy Image Security Scan') {
             parallel {
-                stage('User Service Scan') {
+                stage('User Service') {
                     steps {
                         sh """
                         docker run --rm \
@@ -147,7 +139,7 @@ pipeline {
                         """
                     }
                 }
-                stage('Product Service Scan') {
+                stage('Product Service') {
                     steps {
                         sh """
                         docker run --rm \
@@ -160,7 +152,7 @@ pipeline {
                         """
                     }
                 }
-                stage('Frontend Service Scan') {
+                stage('Frontend Service') {
                     steps {
                         sh """
                         docker run --rm \
