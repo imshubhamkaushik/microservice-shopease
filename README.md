@@ -40,17 +40,17 @@ Infrastructure provisioning (Terraform / Ansible) is intentionally kept out of s
 
 ## Tech Stack
 
-- **CI/CD**: Jenkins
-- **Containerization**: Docker
+- **CI/CD**: Jenkins(Groovy Pipeline)
+- **Containerization**: Docker, Amazon ECR
 - **Cloud Platform**: AWS (EC2, EKS,ECR, IAM)
 - **Orchestration**: Kubernetes (Amazon EKS)
 - **Package Management**: Helm
-- **Security & Quality**: SonarQube, Trivy
+- **Security & Quality**: SonarQube(SAST), Trivy(Container & Config Scan)
 - **Backend Services**: Spring Boot (Microservices)
 - **Frontend**: React
 - **Scripting & Automation**: Bash (Linux Only)
 - **Container Runtime**: Linux
-- **Monitoring**: Prometheus, Grafana
+- **Observability**: Prometheus, Grafana
 
 ---
 
@@ -455,7 +455,7 @@ Windows support is intentionally out of scope to avoid non-production Bash-on-Wi
 
 ---
 
-## Windows Jenkins + Local Kubernetes: Important Note
+<!-- ## Windows Jenkins + Local Kubernetes: Important Note
 
 When running Jenkins as a Windows service, Kubernetes authentication requires a kubeconfig for the service account
 
@@ -463,7 +463,7 @@ When running Jenkins as a Windows service, Kubernetes authentication requires a 
 - Docker Desktop Kubernetes is the recommended local cluster
 - Jenkins does not manage cluster lifecycle
 
-This avoids state corruption and authentication issues.
+This avoids state corruption and authentication issues. -->
 
 ---
 
@@ -509,3 +509,4 @@ These constraints are intentional to keep the project focused and explainable.
 - Applying DevSecOps principles in real-world workflows
 - Building service-level observability using Prometheus and Grafana
 - Cost-conscious cloud experimentation
+
