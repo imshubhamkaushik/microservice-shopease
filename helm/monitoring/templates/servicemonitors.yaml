@@ -16,7 +16,7 @@ spec:
         values:
           - user-service
           - product-service
-          # - frontend-service  # Commented since frontend does not expose Prometheus metrics
+          - frontend-service 
   endpoints:
     - port: http
       path: /actuator/prometheus

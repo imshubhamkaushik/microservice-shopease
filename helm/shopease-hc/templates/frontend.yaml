@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: frontend-service
   labels:
-    app: frontend
+    app: frontend-service
 spec:
   replicas: {{ .Values.frontendService.replicaCount | default 1 }}
   selector:
     matchLabels:
-      app: frontend
+      app: frontend-service
   template:
     metadata:
       labels:
-        app: frontend
+        app: frontend-service
     spec:
       serviceAccountName: shopease-sa
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
       containers:
-        - name: frontend
+        - name: frontend-service
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.frontendService.image.repository }}:{{ .Values.global.imageTag }}"
           ports:
             - name: http
@@ -63,10 +63,10 @@ kind: Service
 metadata:
   name: frontend-service
   labels:
-    app: frontend
+    app: frontend-service
 spec:
   selector:
-    app: frontend
+    app: frontend-service
   ports:
     - protocol: TCP
       port: {{ .Values.frontendService.service.port }}
